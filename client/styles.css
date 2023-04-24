@@ -1,0 +1,211 @@
+:root {
+    /* color palette: */
+    --clr-1: hsl(239, 100%, 70%); /* blue */
+    --clr-2: hsl(155, 100%, 70%); /* green */
+    --clr-3: hsl(62, 100%, 70%); /* yellow */
+    --clr-4: hsl(32, 100%, 70%); /* orange */
+    --clr-5: hsl(0, 100%, 70%); /* red */
+    --clr-6: hsl(284, 100%, 70%); /* purple */
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', 'Arial';
+    z-index: 100;
+}
+
+@keyframes bg-color-animation {
+    0% {background-color: var(--clr-1)}
+    16% {background-color: var(--clr-2)}
+    33% {background-color: var(--clr-3)}
+    50% {background-color: var(--clr-4)}
+    67% {background-color: var(--clr-5)}
+    83% {background-color: var(--clr-6)}
+    100% {background-color: var(--clr-1)}
+}
+
+.main {
+    animation: bg-color-animation 30s linear infinite;
+    /* background-image: conic-gradient(var(--clr-1), var(--clr-2), var(--clr-3), var(--clr-4), var(--clr-5), var(--clr-6), var(--clr-1)); */
+    height: 100vh;
+    z-index: 0;
+}
+
+.main-brightness-overlay {
+    position: absolute;
+    z-index: 1;
+    height: 100vh;
+    width: 100vw;
+}
+
+.home-container {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    height: 100%
+}
+
+.home-buttons-container {
+    display: flex;
+    flex-flow: row nowrap;
+    width: 60%;
+    justify-content: space-evenly;
+}
+
+.input-buttons-container {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.header {
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+.main-title {
+    color: white;
+    font-size: 10vh;
+    margin-bottom: 5vh;
+    text-align: center;
+}
+
+.sub-title {
+    color: white;
+    font-size: 6vh;
+    text-align: center;
+    margin-bottom: 3vh;
+}
+
+.players {
+    display: flex;
+    flex-flow: row wrap;
+    height: 60vh;
+    width: 80vw;
+    justify-content: space-evenly;
+    align-items: space-evenly;
+}
+
+.player-card {
+    width: 40%;
+    height: 30%;
+    border: 3px solid white;
+    border-radius: 30px;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.player-name {
+    color: white;
+    font-size: 3vh;
+}
+
+.main-button {
+    background-color: transparent;
+    color: white;
+    border-color: white;
+    border-style: solid;
+    border-radius: 2vw;
+    width: 20vw;
+    height: 10vh;
+    padding: 2vh;
+    font-size: 3vh;
+    margin-bottom: 2vh;
+}
+
+input {
+    background-color: transparent;
+    border: 1px solid white;
+    border-radius: 5px;
+    color: white;
+    text-align: center;
+}
+
+#join-code-input {
+    height: 3vh;
+    font-size: 3vh;
+    width: 10vh;
+    text-transform: uppercase;
+}
+
+#player-name-input {
+    height: 7vh;
+    font-size: 5vh;
+    width: 50vh;
+    border-radius: 20px;
+    margin-bottom: 3vh;
+}
+
+.back-to-home {
+    z-index: 200;
+    position: absolute;
+    top: 1vh;
+    left: 1vh;
+    width: 5vw;
+    height: 5vh;
+    border: 3px solid white;
+    font-size: 1vh;
+    border-radius: 1vh;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    cursor: pointer;
+}
+
+.brightness-icon {
+    z-index: 200;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 5vw;
+    height: 5vw;
+    filter: invert(100%) drop-shadow(2px 2px 5px #555);;
+}
+
+#brightness-slider {
+    position: absolute;
+    top: 6vw;
+    right: 1vw;
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 20vw; /* Full-width */
+    height: 1vh; /* Specified height */
+    background: white; /* Grey background */
+    outline: none; /* Remove outline */
+    border-radius: 0.5vh;
+    transition: opacity 0.3s;
+}
+
+#brightness-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 25px; /* Set a specific slider handle width */
+    height: 25px; /* Slider handle height */
+    border-radius: 50%;
+    background: white; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+    filter: drop-shadow(2px 2px 5px #555);
+}
+
+#brightness-slider::-moz-range-thumb {
+    width: 25px; /* Set a specific slider handle width */
+    height: 25px; /* Slider handle height */
+    border-radius: 50%;
+    background: white; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+    filter: drop-shadow(2px 2px 5px #555);
+}
+
+.standard-shadow {
+    filter: drop-shadow(2px 2px 5px #555);
+}

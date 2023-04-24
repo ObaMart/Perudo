@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perudo Home</title>
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+</head>
+<body>
+    <div class="brightness">
+        <img class="brightness-icon" src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="toggleBrightnessSlider()">
+        <input type="range" min="0" max="1" value="0.9" step="0.01" id="brightness-slider" style="opacity: 0">
+    </div>
+    <div class="main">
+        <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
+        <div class="home-container">
+            <h1 class="main-title standard-shadow">Perudo</h1>
+            <input type="text" class="standard-shadow" placeholder="Naam" id="player-name-input">
+            <div class="home-buttons-container">
+                <div class="input-buttons-container">
+                    <button class="main-button standard-shadow" onclick="home_JoinWithCode()">Join met code:</button>
+                    <input type="text" id="join-code-input" class="standard-shadow" placeholder="DJAL">
+                </div>
+                <button class="main-button standard-shadow" onclick="home_CreateLobby()">Maak lobby aan</button>
+            </div>
+            <!-- <input id="inp-test" type="text"><button onclick="send()">Test!</button> -->
+        </div>
+    </div>
+    <script src="https://cdn.socket.io/4.5.3/socket.io.js" crossorigin="anonymous"></script>
+    <script src="client.js"></script>
+</body>
+</html>
