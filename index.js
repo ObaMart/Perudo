@@ -8,6 +8,9 @@ const io = require('socket.io')(server);
 // const server = http.Server(app);
 const PORT = 3000;
 let games = {}
+// todo
+// Remove stupid functions (cs-test, cs-log, etc.)
+// game (entirely lol)
 
 fs.readFile("client/index.html", function(err, html) {
 	if (err) throw err;
@@ -21,9 +24,9 @@ fs.readFile("client/index.html", function(err, html) {
 		});
 		socket.on("cs-log", message => {
 			console.log(message);
-			socket.broadcast.emit("sc-test", message)
+			socket.broadcast.emit("sc-test", message);
 		});
-		socket.emit("sc-test", "Connection received from socket!")
+		socket.emit("sc-test", "Connection received from socket!");
 
 		//#region lobby
 		socket.on("cs-lobby-create", data => {
