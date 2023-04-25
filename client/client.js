@@ -34,7 +34,10 @@ function home_CreateLobby() {
 
 function home() { // return to home
 	if (confirm("Weet je zeker dat je terug naar het homescherm wil?")) {
-		window.location = "/"
+		const clientName = urlParams.get("playername");
+		const lobbyCode = urlParams.get("code");
+		socket.emit("cs-disconnect", {playerName: clientName, lobbyCode: lobbyCode})
+		window.location = "/";
 	}
 }
 //#endregion home functions
@@ -65,6 +68,27 @@ brightnessSlider.oninput = function() {
 }
 //#endregion brightness
 
+//#region errors
+socket.on("sc-error-fatal", data => {
+	const {playerName, errorMessage} = data;
+	if (errorMessage) {
+		alert(errorMessage);
+	} else {
+		// default error message
+		alert("Er is een probleem opgetreden. Je wordt teruggestuurd naar de homepagina.");
+	}
+	window.location = "/"
+});
+socket.on("sc-error", data => {
+	const {playerName, errorMessage} = data;
+	if (errorMessage) {
+		alert(errorMessage);
+	} else {
+		alert("Er is een probleem opgetreden.")
+	}
+})
+//#endregion
+
 //#region lobby
 let selected = false;
 let lobbyCode = ""
@@ -81,22 +105,18 @@ if (page == "/lobby.html") {
 	}
 	document.getElementById("lobby-code").innerHTML = lobbyCode
 }
-socket.on("sc-lobby-join-error", data => {
-	const {playerName, errorMessage} = data;
-	if (errorMessage) {
-		alert(errorMessage);
-	} else {
-		// default error message
-		alert("Er is een probleem opgetreden. Je wordt teruggestuurd naar de homepagina.");
-	}
-	window.location = "/"
-});
 socket.on("sc-lobby-player-update", data => {
 	// console.log(data)
 	console.log(Object.entries(data));
 	const clientName = urlParams.get("playername");
 	Object.entries(data).forEach(([colorNum, playerName]) => {
-		if (playerName) document.getElementById(`player${colorNum}-name`).innerHTML = playerName;
+		if (playerName) {
+			document.getElementById(`player${colorNum}-name`).innerHTML = playerName;
+			document.getElementById(`player${colorNum}`).style.cursor = "auto";
+		} else {
+			document.getElementById(`player${colorNum}-name`).innerHTML = "Beschikbaar, klik om te kiezen!";
+			document.getElementById(`player${colorNum}`).style.cursor = "pointer";
+		}
 		if (playerName == clientName) selected = true;
 	});
 });
@@ -120,11 +140,16 @@ function lobby_StartGame() {
 //#endregion lobby
 
 //#region in-game
-socket.on("sc-game-start", data => {
+socket.on("sc-game-init", data => {
 	const {lobbyCode} = data;
 	const clientName = urlParams.get("playername");
 	window.location = `/game.html?code=${lobbyCode}&b=${brightnessSliderValue}&playername=${clientName}`;
 });
+if (page == "game.html") {
+	lobbyCode = urlParams.get("code")
+	const clientName = urlParams.get("playername")
+	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
+}
 // Test if clients are still in socket.io room after game starts (switch html pages)
 //#endregion in-game
 

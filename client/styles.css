@@ -162,14 +162,18 @@ input {
     cursor: pointer;
 }
 
-.brightness-icon {
+img.brightness-icon {
     z-index: 200;
     position: absolute;
     right: 0;
     top: 0;
     width: 5vw;
     height: 5vw;
-    filter: invert(100%) drop-shadow(2px 2px 5px #555);;
+    filter: invert(100%) drop-shadow(2px 2px 5px #555);
+}
+
+img.dice {
+    filter: invert(100%) drop-shadow(2px 2px 5px #555);
 }
 
 #brightness-slider {
@@ -208,4 +212,8 @@ input {
 
 .standard-shadow {
     filter: drop-shadow(2px 2px 5px #555);
+}
+
+.cursorpointer {
+    cursor: pointer;
 }

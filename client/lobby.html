@@ -15,31 +15,34 @@
         <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
         <div class="back-to-home" onclick="home()">Ga terug naar het homescherm</div>
         <div class="home-container">
+
             <div class="header">
                 <h1 class="main-title standard-shadow">Lobby</h1>
                 <h2 class="sub-title standard-shadow" id="lobby-code">Als hier geen code staat is er iets foutgegaan</h2>
             </div>
+            
             <div class="players">
-                <div class="player-card standard-shadow" id="player1" style="background-color: var(--clr-1)" onclick="lobby_ChooseColor(1)">
+                <div class="player-card standard-shadow" id="player1" style="background-color: var(--clr-1); cursor: pointer" onclick="lobby_ChooseColor(1)">
                     <p class="player-name standard-shadow">Speler 1: <span id="player1-name">Beschikbaar, klik om te kiezen!</span></p>
                 </div>
-                <div class="player-card standard-shadow" id="player2" style="background-color: var(--clr-2)" onclick="lobby_ChooseColor(2)">
+                <div class="player-card standard-shadow" id="player2" style="background-color: var(--clr-2); cursor: pointer" onclick="lobby_ChooseColor(2)">
                     <p class="player-name standard-shadow">Speler 2: <span id="player2-name">Beschikbaar, klik om te kiezen!</span></p>
                 </div>
-                <div class="player-card standard-shadow" id="player3" style="background-color: var(--clr-3)" onclick="lobby_ChooseColor(3)">
+                <div class="player-card standard-shadow" id="player3" style="background-color: var(--clr-3); cursor: pointer" onclick="lobby_ChooseColor(3)">
                     <p class="player-name standard-shadow">Speler 3: <span id="player3-name">Beschikbaar, klik om te kiezen!</span></p>
                 </div>
-                <div class="player-card standard-shadow" id="player4" style="background-color: var(--clr-4)" onclick="lobby_ChooseColor(4)">
+                <div class="player-card standard-shadow" id="player4" style="background-color: var(--clr-4); cursor: pointer" onclick="lobby_ChooseColor(4)">
                     <p class="player-name standard-shadow">Speler 4: <span id="player4-name">Beschikbaar, klik om te kiezen!</span></p>
                 </div>
-                <div class="player-card standard-shadow" id="player5" style="background-color: var(--clr-5)" onclick="lobby_ChooseColor(5)">
+                <div class="player-card standard-shadow" id="player5" style="background-color: var(--clr-5); cursor: pointer" onclick="lobby_ChooseColor(5)">
                     <p class="player-name standard-shadow">Speler 5: <span id="player5-name">Beschikbaar, klik om te kiezen!</span></p>
                 </div>
-                <div class="player-card standard-shadow" id="player6" style="background-color: var(--clr-6)" onclick="lobby_ChooseColor(6)">
+                <div class="player-card standard-shadow" id="player6" style="background-color: var(--clr-6); cursor: pointer" onclick="lobby_ChooseColor(6)">
                     <p class="player-name standard-shadow">Speler 6: <span id="player6-name">Beschikbaar, klik om te kiezen!</span></p>
                 </div>
             </div>
             <button class="main-button standard-shadow" onclick="lobby_StartGame()" id="start-game-button">Start game</button>
+            
         </div>
     </div>
     <script src="https://cdn.socket.io/4.5.3/socket.io.js" crossorigin="anonymous"></script>
