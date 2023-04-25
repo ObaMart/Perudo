@@ -29,7 +29,6 @@
 
 .main {
     animation: bg-color-animation 30s linear infinite;
-    /* background-image: conic-gradient(var(--clr-1), var(--clr-2), var(--clr-3), var(--clr-4), var(--clr-5), var(--clr-6), var(--clr-1)); */
     height: 100vh;
     z-index: 0;
 }
@@ -52,7 +51,7 @@
 .home-buttons-container {
     display: flex;
     flex-flow: row nowrap;
-    width: 60%;
+    width: 60vw;
     justify-content: space-evenly;
 }
 
@@ -71,7 +70,7 @@
 .main-title {
     color: white;
     font-size: 10vh;
-    margin-bottom: 5vh;
+    margin-bottom: 2vh;
     text-align: center;
 }
 
@@ -79,7 +78,14 @@
     color: white;
     font-size: 6vh;
     text-align: center;
-    margin-bottom: 3vh;
+    margin-bottom: 2vh;
+}
+
+.mini-title {
+    color: white;
+    font-size: 4vh;
+    text-align: center;
+    margin-bottom: 5vh;
 }
 
 .players {
@@ -118,6 +124,7 @@
     padding: 2vh;
     font-size: 3vh;
     margin-bottom: 2vh;
+    cursor: pointer;
 }
 
 input {
@@ -216,4 +223,88 @@ img.dice {
 
 .cursorpointer {
     cursor: pointer;
+}
+
+#your-turn, #others-turn {
+    flex-flow: column nowrap;
+    align-items: center;
+    justify-content: center;
+}
+
+#last-turn-yt, #last-turn-ot {
+    font-size: 3vh;
+    color: white;
+    line-height: 3vh;
+    margin-bottom: 2vh;
+}
+
+.standard-text {
+    font-size: 3vh;
+    color: white;
+    line-height: 3vh;
+    margin-bottom: 2vh;
+}
+
+#rolled-dice-yt, #rolled-dice-ot {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-bottom: 8vh;
+    width: 30vw;
+}
+
+.small-dice {
+    height: 3vh;
+    margin: 0 0 -0.4vh 0;
+    display: inline;
+    white-space: nowrap;
+}
+
+#reveal-round {
+
+}
+
+.game-buttons-container {
+    display: flex;
+    flex-flow: row nowrap;
+    width: 50vw;
+    justify-content: space-evenly;
+}
+
+.bid-options-container {
+    display: flex;
+    flex-flow: row nowrap;
+    width: 50vw;
+    justify-content: space-evenly;
+    margin-bottom: 2vh;
+}
+
+#bid-amount-input {
+    height: 8vh;
+    width: 10vh;
+    font-size: 8vh;
+}
+
+.medium-dice {
+    height: 8vh;
+    margin: 0 0 -0.4vh 0;
+    display: inline;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.unchosen {
+    opacity: 0.5;
 }

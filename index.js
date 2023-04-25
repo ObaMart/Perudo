@@ -7,8 +7,9 @@ const server = http.Server(app);
 const io = require('socket.io')(server);
 // const server = http.Server(app);
 const PORT = 3000;
-let games = {}
-const maxPlayers = 6
+let games = {};
+const minPlayers = 1;
+const maxPlayers = 6;
 // todo
 // Remove stupid functions (cs-test, cs-log, etc.)
 // game (entirely lol)
@@ -84,10 +85,12 @@ fs.readFile("client/index.html", function(err, html) {
 				for (const playerNum in games[lobbyCode].seats) {
 					if (games[lobbyCode].seats[playerNum]) amtChosen++;
 				}
-				if (amtChosen != games[lobbyCode].joinedPlayers.length) {
-					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want nog niet iedereen heeft een kleur gekozen"});
-					console.log(amtChosen);
-					console.log(games[lobbyCode].joinedPlayers)
+				if (games[lobbyCode].joinedPlayers.length < minPlayers) {
+					soscket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want het minimum aantal deelnemers is nog niet bereikt."})
+				} else if (amtChosen != games[lobbyCode].joinedPlayers.length) {
+					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want nog niet iedereen heeft een kleur gekozen."});
+					// console.log(amtChosen);
+					// console.log(games[lobbyCode].joinedPlayers)
 				} else {
 					io.sockets.in(lobbyCode).emit("sc-game-init", {lobbyCode: lobbyCode});
 					games[lobbyCode].alivePlayers = [];
@@ -114,5 +117,14 @@ fs.readFile("client/index.html", function(err, html) {
 });
 
 function loopGame(lobbyCode) {
+
+}
+
+function newRound(lobbyCode, startingPlayer, pacifico) {
+
+}
+
+function newTurn(lobbyCode, playersTurn, lastTurn) {
+	document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn}) !important`;
 
 }

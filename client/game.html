@@ -11,22 +11,58 @@
         <img class="brightness-icon" src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="toggleBrightnessSlider()">
         <input type="range" min="0" max="1" value="0.9" step="0.01" id="brightness-slider" style="opacity: 0">
     </div>
-    <div class="main">
+    <div class="main" id="main">
         <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
-        <div class="back-to-home" onclick="home()">Ga terug naar het homescherm</div>
+        <div class="back-to-home standard-shadow" onclick="home()">Verlaat spel</div>
         <div class="home-container">
             <div class="header">
                 <h1 class="main-title standard-shadow">Game</h1>
             </div>
-            <div id="your-turn"> <!--Case: Tijdens verhogen, aan de beurt-->
+
+            <div id="your-turn" style="display: flex">
+                <h3 class="mini-title standard-shadow">Jij bent aan de beurt!</h3>
+                <p class="standard-text standard-shadow">Jouw dobbelstenen:</p>
+                <div id="rolled-dice-yt">
+                    <img id="rolled-dice1-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice2-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice3-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice4-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice5-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                </div>
+                <p id="last-turn-yt" class="standard-shadow">Laatste bod (<span id="last-player-yt">laatste speler</span>): <span id="last-player-bid-amount-yt">X</span> keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" id="last-player-bid-type-yt"></p>
+                <div class="game-buttons-container">
+                    <button id="dudo" class="main-button standard-shadow" onclick="game_Dudo()">Ik geloof het niet</button>
+                    <button id="calza" class="main-button standard-shadow" onclick="game_Calza()">Het klopt exact</button>
+                </div>
+                <div class="bid-options-container">
+                    <input type="number" id="bid-amount-input">
+                    <img id="dice2" src="icons/dice/2.png" alt="Choose dice 2" class="dice medium-dice unchosen" onclick="game_Select(2)">
+                    <img id="dice3" src="icons/dice/3.png" alt="Choose dice 3" class="dice medium-dice unchosen" onclick="game_Select(3)">
+                    <img id="dice4" src="icons/dice/4.png" alt="Choose dice 4" class="dice medium-dice unchosen" onclick="game_Select(4)">
+                    <img id="dice5" src="icons/dice/5.png" alt="Choose dice 5" class="dice medium-dice unchosen" onclick="game_Select(5)">
+                    <img id="dice6" src="icons/dice/6.png" alt="Choose dice 6" class="dice medium-dice unchosen" onclick="game_Select(6)">
+                    <img id="dice12" src="icons/dice/12.png" alt="Choose dice Ace" class="dice medium-dice unchosen" onclick="game_Select(12)">
+                </div>
+                <button id="bid" class="main-button standard-shadow" onclick="game_Bid()">Verhogen</button>
+            </div>
+
+            <div id="others-turn" style="display: none">
+                <h3 class="mini-title standard-shadow"><span id="current-player-ot">Huidige speler</span> is aan het denken...</h2>
+                <p class="standard-text standard-shadow">Jouw dobbelstenen:</p>
+                <div id="rolled-dice-ot">
+                    <img id="rolled-dice1-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice2-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice3-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice4-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                    <img id="rolled-dice5-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
+                </div>
+                <p id="last-turn-ot" class="standard-shadow">Laatste bod (<span id="last-player-ot">laatste speler</span>): <span id="last-player-bid-amount-ot">X</span> keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" id="last-player-bid-type-ot"></p>
+            </div>
+
+            <div id="reveal-round" style="display: none">
 
             </div>
-            <div id="others-turn"> <!--Case: Tijdens verhogen, niet aan de beurt-->
 
-            </div>
-            <div id="view-dice"> <!--Case: bluf / exact-->
-
-            </div>
         </div>
     </div>
     <script src="https://cdn.socket.io/4.5.3/socket.io.js" crossorigin="anonymous"></script>

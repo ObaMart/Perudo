@@ -151,6 +151,39 @@ if (page == "game.html") {
 	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
 }
 // Test if clients are still in socket.io room after game starts (switch html pages)
+
+function game_Dudo() {
+
+}
+
+function game_Calza() {
+
+}
+
+function game_Bid() {
+	const lastDiceType = 0;
+	const lastBidAmount = 0;
+	const chosenBidAmount = document.getElementById("bid-amount-input").value;
+	if (
+		(chosenDiceType > lastDiceType && chosenBidAmount >= lastBidAmount) // verhoog soort dobbelstenen
+		|| (chosenDiceType >= lastDiceType && chosenBidAmount > lastBidAmount && lastDiceType != 12) // verhoog aantal dobbelstenen
+		|| (chosenBidAmount > lastBidAmount * 2 && lastDiceType == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
+		|| (chosenBidAmount > Math.floor(lastBidAmount / 2) && lastDiceType != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
+		|| (chosenDiceType == 12 && lastDiceType == 12 && chosenBidAmount > lastBidAmount)
+	) {
+		// passed
+	}
+}
+
+let chosenDiceType = 0;
+function game_Select(diceNumber) {
+	document.getElementById(`dice${diceNumber}`).classList.remove("unchosen");
+	chosenDiceType = diceNumber;
+	for (const x of [2, 3, 4, 5, 6, 12]) {
+		if (x != diceNumber) document.getElementById(`dice${x}`).classList.add("unchosen");
+	}
+}
+
 //#endregion in-game
 
 //#region general functions
