@@ -19,7 +19,7 @@
                 <h1 class="main-title standard-shadow">Game</h1>
             </div>
 
-            <div id="your-turn" style="display: flex">
+            <div id="your-turn" style="display: none">
                 <h3 class="mini-title standard-shadow">Jij bent aan de beurt!</h3>
                 <p class="standard-text standard-shadow">Jouw dobbelstenen:</p>
                 <div id="rolled-dice-yt">
@@ -29,8 +29,12 @@
                     <img id="rolled-dice4-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
                     <img id="rolled-dice5-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice">
                 </div>
-                <p id="last-turn-yt" class="standard-shadow">Laatste bod (<span id="last-player-yt">laatste speler</span>): <span id="last-player-bid-amount-yt">X</span> keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" id="last-player-bid-type-yt"></p>
-                <div class="game-buttons-container">
+                <p id="last-turn-yt" class="standard-shadow">
+                    Laatste bod 
+                    (<span id="last-player-yt">laatste speler</span>): <span id="last-player-bid-amount-yt">X</span> 
+                    keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" id="last-player-bid-type-yt">
+                </p>
+                <div class="game-buttons-container" id="game-buttons-container">
                     <button id="dudo" class="main-button standard-shadow" onclick="game_Dudo()">Ik geloof het niet</button>
                     <button id="calza" class="main-button standard-shadow" onclick="game_Calza()">Het klopt exact</button>
                 </div>

@@ -270,6 +270,7 @@ img.dice {
     flex-flow: row nowrap;
     width: 50vw;
     justify-content: space-evenly;
+    margin-bottom: 4vh;
 }
 
 .bid-options-container {

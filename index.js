@@ -2,6 +2,7 @@
 const fs = require('fs');
 const http = require('http');
 const express = require('express');
+const { start } = require('repl');
 const app = express();
 const server = http.Server(app);
 const io = require('socket.io')(server);
@@ -55,7 +56,7 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.on("cs-lobby-create", data => {
 			const {lobbyCode, playerName} = data;
 			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null}, joinedPlayers: [playerName], lobbyOwner: playerName}
-			socket.join(lobbyCode)
+			socket.join(lobbyCode);
 		});
 		socket.on("cs-lobby-color-choice", data => {
 			const {playerName, color, lobbyCode} = data;
@@ -102,13 +103,21 @@ fs.readFile("client/index.html", function(err, html) {
 		//#region game
 		socket.on("cs-game-ready", data => {
 			const {playerName, lobbyCode} = data;
+			if (!(lobbyCode in games)) return;
+			socket.join(lobbyCode);
 			games[lobbyCode].alivePlayers.push(playerName);
+			// console.log(games[lobbyCode].alivePlayers);
 			if (games[lobbyCode].alivePlayers.length == games[lobbyCode].joinedPlayers.length) {
 				io.sockets.in(lobbyCode).emit("sc-game-start", {lobbyCode: lobbyCode});
-				loopGame();
+				loopGame(lobbyCode);
 			}
 		});
-
+		
+		socket.on("cs-game-bid", data => {
+			const {lobbyCode, playerName, bid} = data;
+			const game = games[lobbyCode]
+			if (!(playerName == game.playersTurn.playerName)) return;
+		})
 		//#endregion game
 	});
 
@@ -117,14 +126,31 @@ fs.readFile("client/index.html", function(err, html) {
 });
 
 function loopGame(lobbyCode) {
-
+	console.log(`Looping game ${lobbyCode} in 5 seconds...`)
+	setTimeout(() => {
+		console.log(`looping game ${lobbyCode}!`);
+		const game = games[lobbyCode];
+		game.participants = {};
+		for (const playerNum in game.seats) {
+			if (game.seats[playerNum]) game.participants[playerNum] = {playerName: game.seats[playerNum], dice: 5};
+		}
+		delete game.seats;
+		const startingPlayer = randomChoice(Object.keys(game.participants));
+		game.playersTurn = {playerNum: startingPlayer, playerName: game.participants[startingPlayer].playerName}
+		newRound(lobbyCode, game.playersTurn, false);
+	}, 5);
 }
 
 function newRound(lobbyCode, startingPlayer, pacifico) {
-
+	// const game = games[lobbyCode] 
+	io.sockets.in(lobbyCode).emit("sc-new-turn", {lobbyCode: lobbyCode, playersTurn: startingPlayer, pacifico: pacifico, lastTurn: null});
 }
 
-function newTurn(lobbyCode, playersTurn, lastTurn) {
-	document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn}) !important`;
+// function newTurn(lobbyCode, playersTurn, lastTurn) {
+// }
 
+//#region general functions
+function randomChoice(arr) {
+	return arr[Math.floor(Math.random()*arr.length)];
 }
+//#endregion general functions

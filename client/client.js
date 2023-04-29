@@ -145,35 +145,74 @@ socket.on("sc-game-init", data => {
 	const clientName = urlParams.get("playername");
 	window.location = `/game.html?code=${lobbyCode}&b=${brightnessSliderValue}&playername=${clientName}`;
 });
-if (page == "game.html") {
-	lobbyCode = urlParams.get("code")
-	const clientName = urlParams.get("playername")
+if (page == "/game.html") {
+	lobbyCode = urlParams.get("code");
+	const clientName = urlParams.get("playername");
 	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
 }
 // Test if clients are still in socket.io room after game starts (switch html pages)
 
 function game_Dudo() {
-
+	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, playerName: playerName, lastPlayerName: "placeholder"});
 }
 
 function game_Calza() {
-
+	socket.emit("cs-game-calza", {lobbyCode: lobbyCode, playerName: playerName, lastPlayerName: "placeholder"});
 }
 
+let lastDiceType = 0;
+let lastBidAmount = 0;
 function game_Bid() {
-	const lastDiceType = 0;
-	const lastBidAmount = 0;
+	const lobbyCode = urlParams.get("code");
+	const clientName = urlParams.get("playername");
 	const chosenBidAmount = document.getElementById("bid-amount-input").value;
 	if (
-		(chosenDiceType > lastDiceType && chosenBidAmount >= lastBidAmount) // verhoog soort dobbelstenen
+		((chosenDiceType > lastDiceType && chosenBidAmount >= lastBidAmount) // verhoog soort dobbelstenen
 		|| (chosenDiceType >= lastDiceType && chosenBidAmount > lastBidAmount && lastDiceType != 12) // verhoog aantal dobbelstenen
 		|| (chosenBidAmount > lastBidAmount * 2 && lastDiceType == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
 		|| (chosenBidAmount > Math.floor(lastBidAmount / 2) && lastDiceType != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
-		|| (chosenDiceType == 12 && lastDiceType == 12 && chosenBidAmount > lastBidAmount)
+		|| (chosenDiceType == 12 && lastDiceType == 12 && chosenBidAmount > lastBidAmount))
+		&& (chosenBidAmount > 0 && chosenDiceType > 0)
 	) {
-		// passed
+		// valid
+		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}})
 	}
 }
+
+socket.on("sc-new-turn", data => {
+	const {lobbyCode, playersTurn, lastTurn, pacifico} = data;
+	const clientName = urlParams.get("playername");
+	document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn}) !important`;
+	if (playersTurn.playerName == clientName) {
+		// Your turn
+		document.getElementById("your-turn").style.display = "flex";
+		document.getElementById("others-turn").style.display = "none";
+		document.getElementById("reveal-round").style.display = "none";
+		if (!lastTurn) {
+			document.getElementById("bid").innerHTML = "Bieden";
+			document.getElementById("game-buttons-container").style.display = "none";
+			document.getElementById("last-turn-yt").style.display = "none";
+			lastDiceType = 0;
+			lastBidAmount = 0;
+		} else {
+			document.getElementById("bid").innerHTML = "Verhogen";
+			document.getElementById("game-buttons-container").style.display = "flex";
+			document.getElementById("last-turn-yt").style.display = "inline"; // CHECK THIS
+			lastDiceType = lastTurn.type;
+			lastBidAmount = lastTurn.amount;
+			document.getElementById("last-player-bid-amount-yt").innerHTML = lastTurn.amount;
+			document.getElementById("last-player-bid-type-yt").src = `icons/dice/${lastTurn.type}.png`;
+		}
+	} else {
+		// Others turn
+		document.getElementById("your-turn").style.display = "none";
+		document.getElementById("others-turn").style.display = "flex";
+		document.getElementById("reveal-round").style.display = "none";
+		if (!lastTurn) {
+			document.getElementById("last-turn-ot").style.display = "none";
+		}
+	}
+})
 
 let chosenDiceType = 0;
 function game_Select(diceNumber) {
