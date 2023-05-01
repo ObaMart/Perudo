@@ -175,16 +175,43 @@ function game_Bid() {
 		&& (chosenBidAmount > 0 && chosenDiceType > 0)
 	) {
 		// valid
-		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}})
+		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}});
+	} else {
+		alert("Jouw bod is ongeldig. Probeer het opnieuw met een ander bod.")
 	}
 }
 
 socket.on("sc-new-turn", data => {
-	const {lobbyCode, playersTurn, lastTurn, pacifico} = data;
+	const {lobbyCode, playersTurn, lastTurn, pacifico, dice, lastPlayerName} = data;
 	const clientName = urlParams.get("playername");
-	document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn}) !important`;
+	let clientDice;
+	if (dice) {
+		clientDice = dice[clientName];
+	}
+	document.getElementById("main").classList.remove(["clr1","clr2","clr3","clr4","clr5","clr6"]);
+	document.getElementById("main").classList.add(`clr${playersTurn.playerNum}`);
+	// document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn.playerNum}) !important`;
+	if (clientDice) {
+		for (let i = 0; i < 5; i++) {
+			const die = document.getElementById(`rolled-dice${i+1}-yt`);
+			const die2 = document.getElementById(`rolled-dice${i+1}-ot`);
+			if (clientDice[i]) {
+				die.src = `icons/dice/${clientDice[i]}.png`;
+				die.style.display = "inline";
+				die2.src = `icons/dice/${clientDice[i]}.png`;
+				die2.style.display = "inline";
+			} else {
+				die.style.display = "none";
+				die2.style.display = "none";
+			}
+		}
+	}
 	if (playersTurn.playerName == clientName) {
 		// Your turn
+		for (const x of [2, 3, 4, 5, 6, 12]) {
+			document.getElementById(`dice${x}`).classList.add("unchosen");
+		}
+		document.getElementById("bid-amount-input").reset();
 		document.getElementById("your-turn").style.display = "flex";
 		document.getElementById("others-turn").style.display = "none";
 		document.getElementById("reveal-round").style.display = "none";
@@ -200,6 +227,7 @@ socket.on("sc-new-turn", data => {
 			document.getElementById("last-turn-yt").style.display = "inline"; // CHECK THIS
 			lastDiceType = lastTurn.type;
 			lastBidAmount = lastTurn.amount;
+			document.getElementById("last-player-yt").innerHTML = lastPlayerName;
 			document.getElementById("last-player-bid-amount-yt").innerHTML = lastTurn.amount;
 			document.getElementById("last-player-bid-type-yt").src = `icons/dice/${lastTurn.type}.png`;
 		}
@@ -210,7 +238,12 @@ socket.on("sc-new-turn", data => {
 		document.getElementById("reveal-round").style.display = "none";
 		if (!lastTurn) {
 			document.getElementById("last-turn-ot").style.display = "none";
+		} else {
+			document.getElementById("last-player-ot").innerHTML = lastPlayerName;
+			document.getElementById("last-player-bid-amount-ot").innerHTML = lastTurn.amount;
+			document.getElementById("last-player-bid-type-ot").src = `icons/dice/${lastTurn.type}.png`;
 		}
+		document.getElementById("current-player-ot").innerHTML = playersTurn.playerName;
 	}
 })
 
