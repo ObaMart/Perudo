@@ -30,8 +30,12 @@
 
 .main {
     animation: bg-color-animation 30s linear infinite;
-    height: 100vh;
+    min-height: 100vh;
     z-index: 0;
+    min-width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .clr1 {
@@ -347,4 +351,9 @@ input[type=number] {
     justify-content: space-evenly;
     width: 90%;
     margin-top: 2vh;
+}
+
+.dissolve {
+    opacity: 0.35;
+    transition: opacity 3s ease-in-out;
 }

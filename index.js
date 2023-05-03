@@ -11,9 +11,7 @@ const PORT = 3000;
 let games = {};
 const minPlayers = 1;
 const maxPlayers = 6;
-// todo
-// Remove stupid functions (cs-test, cs-log, etc.)
-// game (entirely lol)
+const amountDice = 5;
 
 fs.readFile("client/index.html", function(err, html) {
 	if (err) throw err;
@@ -135,7 +133,7 @@ fs.readFile("client/index.html", function(err, html) {
 			const {lobbyCode, playerName, lastTurn} = data;
 			const game = games[lobbyCode];
 			const jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
-			// console.log(jokersCount);
+			let loser = {};
 			if (lastTurn.amount > (game.diceCounts[lastTurn.type] + jokersCount)) { // guess was incorrect -> dudo was correct
 				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
 					loser: lastTurn.playerName,
@@ -144,9 +142,10 @@ fs.readFile("client/index.html", function(err, html) {
 					inflicted: lastTurn.playerName,
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
-					lastTurn: lastTurn
+					lastTurn: lastTurn,
+					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
 				});
-				// console.log("Correct dudo:");
+				loser = {playerNum: game.nameColors[lastTurn.playerName], playerName: lastTurn.playerName}
 			} else { // guess was correct -> dudo was incorrect
 				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
 					loser: playerName,
@@ -155,16 +154,87 @@ fs.readFile("client/index.html", function(err, html) {
 					inflicted: lastTurn.playerName,
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
-					lastTurn: lastTurn
+					lastTurn: lastTurn,
+					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
 				});
-				// console.log("Incorrect dudo:");
+				loser = {playerNum: game.nameColors[playerName], playerName: playerName}
 			}
-			// console.log(`Guess: ${lastTurn.amount} * [${lastTurn.type}], count: ${game.diceCounts[lastTurn.type]}, joker count: ${game.diceCounts[12]}`)
+			game.participants[loser.playerNum].dice -= 1;
+			game.playersTurn = {playerNum: loser.playerNum, playerName: loser.playerName}
+			if (game.participants[loser.playerNum].dice == 0) {
+				delete game.participants[loser.playerNum];
+				delete game.dice[loser.playerName];
+				const randomNewTurnNumber = randomChoice(Object.keys(game.participants))
+				game.playersTurn = {playerNum: randomNewTurnNumber, playerName: game.participants[randomNewTurnNumber]}
+				game.pacifico = false;
+			} else if (game.participants[loser.playerNum].dice == 1 && game.participants[loser.playerNum].beenPacifico == false) {
+				game.participants[loser.playerNum].beenPacifico = true;
+				game.pacifico = true;
+			} else {
+				game.pacifico = false;
+			}
+			if (Object.keys(game.participants).length == 1) {
+				endGame(lobbyCode);
+			}
 		});
 
 		socket.on("cs-game-calza", data => {
 			const {lobbyCode, playerName, lastTurn} = data;
+			const game = games[lobbyCode];
+			const jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
+			if (lastTurn.amount == (game.diceCounts[lastTurn.type] + jokersCount)) { // calza is correct
+				io.sockets.in(lobbyCode).emit("sc-calza-round-end", {
+					winner: playerName,
+					dice: game.dice,
+					inflicter: playerName,
+					inflicted: lastTurn.playerName,
+					nameColors: game.nameColors,
+					ownerName: game.lobbyOwner,
+					lastTurn: lastTurn,
+					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
+				});
+				const winnner = {playerNum: game.nameColors[lastTurn.playerName], playerName: lastTurn.playerName}
+				if (game.participants[winner.playerNum].dice != amountDice) game.participants[winner.playerNum].dice += 1;
+				game.playersTurn = {playerNum: winner.playerNum, playerName: winner.playerName}
+				game.pacifico = false;
+			} else { // calza is incorrect
+				io.sockets.in(lobbyCode).emit("sc-calza-round-end", {
+					loser: playerName,
+					dice: game.dice,
+					inflicter: playerName,
+					inflicted: lastTurn.playerName,
+					nameColors: game.nameColors,
+					ownerName: game.lobbyOwner,
+					lastTurn: lastTurn,
+					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
+				});
+				const loser = {playerNum: game.nameColors[playerName], playerName: playerName}
+				game.participants[loser.playerNum].dice -= 1;
+				game.playersTurn = {playerNum: loser.playerNum, playerName: loser.playerName}
+				if (game.participants[loser.playerNum].dice == 0) {
+					delete game.participants[loser.playerNum];
+					delete game.dice[loser.playerName];
+					const randomNewTurnNumber = randomChoice(Object.keys(game.participants))
+					game.playersTurn = {playerNum: randomNewTurnNumber, playerName: game.participants[randomNewTurnNumber]}
+					game.pacifico = false;
+				} else if (game.participants[loser.playerNum].dice == 1 && game.participants[loser.playerNum].beenPacifico == false) {
+					game.participants[loser.playerNum].beenPacifico = true;
+					game.pacifico = true;
+				} else {
+					game.pacifico = false;
+				}
+				if (Object.keys(game.participants).length == 1) {
+					endGame(lobbyCode)
+				}
+			}
+			
 		});
+
+		socket.on("cs-next-round", data => {
+			const {playerName, lobbyCode} = data;
+			if (playerName != games[lobbyCode].lobbyOwner) return;
+			newRound(lobbyCode, games[lobbyCode].playersTurn, games[lobbyCode].pacifico)
+		})
 		//#endregion game
 	});
 
@@ -182,7 +252,7 @@ function loopGame(lobbyCode) {
 		game.pacifico = false;
 		for (const playerNum in game.seats) {
 			if (game.seats[playerNum]) {
-				game.participants[playerNum] = {playerName: game.seats[playerNum], dice: 5};
+				game.participants[playerNum] = {playerName: game.seats[playerNum], dice: amountDice, beenPacifico: false};
 				game.nameColors[game.seats[playerNum]] = playerNum;
 			}
 		}
@@ -216,6 +286,12 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 		dice: dice,
 		lastPlayerName: null
 	});
+}
+
+function endGame(lobbyCode) {
+	const game = games[lobbyCode];
+	const winner = {playerNum: Object.keys(game.participants)[0], playerName: Object.values(game.participants)[0]};
+	// win shit
 }
 
 //#region general functions

@@ -198,13 +198,16 @@ function game_Bid() {
 
 socket.on("sc-new-turn", data => {
 	const {lobbyCode, playersTurn, lastTurn, pacifico, dice} = data;
+	document.getElementById("players-dice-container").innerHTML = "";
+	console.log(`Pacifico: ${pacifico}`);
 	lastTurnGlobal = lastTurn;
 	const clientName = urlParams.get("playername");
 	let clientDice;
 	if (dice) {
 		clientDice = dice[clientName];
 	}
-	document.getElementById("main").classList.remove(["clr1","clr2","clr3","clr4","clr5","clr6"]);
+	chosenDiceType = 0;
+	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
 	document.getElementById("main").classList.add(`clr${playersTurn.playerNum}`);
 	// document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn.playerNum}) !important`;
 	if (clientDice) {
@@ -221,6 +224,12 @@ socket.on("sc-new-turn", data => {
 				die2.style.display = "none";
 			}
 		}
+	} else {
+		for (let i = 0; i < 5; i++) {
+			document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
+			document.getElementById(`rolled-dice${i+1}-ot`).style.display = "none";
+		}
+		document.getElementById("your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
 	}
 	if (playersTurn.playerName == clientName) {
 		// Your turn
@@ -264,13 +273,14 @@ socket.on("sc-new-turn", data => {
 });
 
 socket.on("sc-dudo-round-end", data => {
-	const {inflicter, inflicted, loser, dice, nameColors, ownerName, lastTurn} = data;
+	const {inflicter, inflicted, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
 	const clientName = urlParams.get("playername");
-	document.getElementById("main").classList.remove(["clr1","clr2","clr3","clr4","clr5","clr6"]);
+	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
 	document.getElementById("inflicter-action").innerHTML = `${inflicter} neemt de gok van ${inflicted} in twijfel`;
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
-	document.getElementById("winner-loser-action").innerHTML = `${loser} moet een dobbelsteen inleveren.`;
+	document.getElementById("winner-loser-action").innerHTML = 
+		`${loser} moet een dobbelsteen inleveren, want er zijn ${guessedDiceAmount} keer <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
 	document.getElementById("your-turn").style.display = "none";
 	document.getElementById("others-turn").style.display = "none";
 	document.getElementById("reveal-round").style.display = "flex";
@@ -285,15 +295,25 @@ socket.on("sc-dudo-round-end", data => {
 		cardName.innerHTML = name;
 		const cardDice = document.createElement("div");
 		cardDice.classList.add("card-dice")
+		let i = 0;
 		for (const die of diceList) {
 			const cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/${die}.png`;
 			cardDie.classList.add("dice", "reveal-dice");
+			cardDie.id = `die${name}${i}`
 			cardDice.appendChild(cardDie);
+			i++;
 		}
 		card.appendChild(cardName);
 		card.appendChild(cardDice);
 		container.append(card);
+		if (name == loser) {
+			(async () => {
+				await setTimeout(async () => {
+					document.getElementById(`die${name}${i-1}`).classList.add("dissolve");
+				}, 2000)
+			})();
+		}
 	}
 	if (clientName == ownerName) {
 		(async () => {
@@ -302,7 +322,11 @@ socket.on("sc-dudo-round-end", data => {
 			}, 5000)
 		})();
 	}
-})
+});
+
+socket.on("sc-calza-round-end", data => {
+
+});
 
 let chosenDiceType = 0;
 function game_Select(diceNumber) {
@@ -318,6 +342,7 @@ function game_NextRound() {
 		const clientName = urlParams.get("playername");
 		const lobbyCode = urlParams.get("code");
 		socket.emit("cs-next-round", {playerName: clientName, lobbyCode: lobbyCode});
+		// console.log("Requested next round");
 	}
 }
 
