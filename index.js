@@ -19,15 +19,7 @@ fs.readFile("client/index.html", function(err, html) {
 	app.use("/", express.static(__dirname + "/client"))
 
 	io.on("connection", (socket) => {
-		console.log(`Connected to socket [${socket.id}]`)
-		socket.on("cs-test", message => {
-			console.log(message);
-		});
-		socket.on("cs-log", message => {
-			console.log(message);
-			socket.broadcast.emit("sc-test", message);
-		});
-		socket.emit("sc-test", "Connection received from socket!");
+		socket.emit("sc-test", "Connected to server");
 
 		//#region home
 		socket.on("cs-disconnect", data => {
@@ -46,7 +38,6 @@ fs.readFile("client/index.html", function(err, html) {
 				}
 			}
 			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
-			// console.log(games[lobbyCode])
 		})
 		//#endregion home
 
@@ -59,12 +50,10 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.on("cs-lobby-color-choice", data => {
 			const {playerName, color, lobbyCode} = data;
 			if (!games[lobbyCode].seats[color]) games[lobbyCode].seats[color] = playerName;
-			// console.log(games[lobbyCode].seats);
 			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
 		});
 		socket.on("cs-lobby-join", data => {
 			const {lobbyCode, playerName} = data;
-			// console.log(games[lobbyCode].joinedPlayers)
 			if (!(lobbyCode in games)) {
 				socket.emit("sc-error-fatal", {playerName: playerName, errorMessage: `Deze lobbycode (${lobbyCode}) is ongeldig. Probeer het opnieuw.`});
 			} else if (games[lobbyCode].joinedPlayers.includes(playerName)) {
@@ -88,8 +77,6 @@ fs.readFile("client/index.html", function(err, html) {
 					soscket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want het minimum aantal deelnemers is nog niet bereikt."})
 				} else if (amtChosen != games[lobbyCode].joinedPlayers.length) {
 					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want nog niet iedereen heeft een kleur gekozen."});
-					// console.log(amtChosen);
-					// console.log(games[lobbyCode].joinedPlayers)
 				} else {
 					io.sockets.in(lobbyCode).emit("sc-game-init", {lobbyCode: lobbyCode});
 					games[lobbyCode].alivePlayers = [];
@@ -104,7 +91,6 @@ fs.readFile("client/index.html", function(err, html) {
 			if (!(lobbyCode in games)) return;
 			socket.join(lobbyCode);
 			games[lobbyCode].alivePlayers.push(playerName);
-			// console.log(games[lobbyCode].alivePlayers);
 			if (games[lobbyCode].alivePlayers.length == games[lobbyCode].joinedPlayers.length) {
 				io.sockets.in(lobbyCode).emit("sc-game-start", {lobbyCode: lobbyCode});
 				loopGame(lobbyCode);
@@ -116,14 +102,12 @@ fs.readFile("client/index.html", function(err, html) {
 			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
 			if (!(game.playersTurn.playerName == playerName)) return;
-			// console.log(game.playersTurn.playerNum);
-			// console.log(next(lobbyCode,game.playersTurn.playerNum));
 			const nextPlayersTurn = {playerNum: next(lobbyCode, game.playersTurn.playerNum), playerName: game.participants[next(lobbyCode, game.playersTurn.playerNum)].playerName}
 			io.sockets.in(lobbyCode).emit("sc-new-turn", {
 				lobbyCode: lobbyCode,
 				playersTurn: nextPlayersTurn,
 				lastTurn: {...bid, playerName: playerName},
-				pacifico: game.pacifico,
+				pacifico: game.pacifico
 				// lastPlayerName: playerName,
 			});
 			game.playersTurn = nextPlayersTurn;
@@ -132,9 +116,11 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.on("cs-game-dudo", data => {
 			const {lobbyCode, playerName, lastTurn} = data;
 			const game = games[lobbyCode];
-			const jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
+			let jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
+			// if (!jokersCount) jokersCount = 0;
 			let loser = {};
-			if (lastTurn.amount > (game.diceCounts[lastTurn.type] + jokersCount)) { // guess was incorrect -> dudo was correct
+			let guessedDiceAmount = game.diceCounts[lastTurn.type] + jokersCount;
+			if (lastTurn.amount > (guessedDiceAmount)) { // guess was incorrect -> dudo was correct
 				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
 					loser: lastTurn.playerName,
 					dice: game.dice,
@@ -143,7 +129,7 @@ fs.readFile("client/index.html", function(err, html) {
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
 					lastTurn: lastTurn,
-					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
+					guessedDiceAmount: guessedDiceAmount
 				});
 				loser = {playerNum: game.nameColors[lastTurn.playerName], playerName: lastTurn.playerName}
 			} else { // guess was correct -> dudo was incorrect
@@ -181,8 +167,10 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.on("cs-game-calza", data => {
 			const {lobbyCode, playerName, lastTurn} = data;
 			const game = games[lobbyCode];
-			const jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
-			if (lastTurn.amount == (game.diceCounts[lastTurn.type] + jokersCount)) { // calza is correct
+			let jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
+			// if (!jokersCount) jokersCount = 0;
+			let guessedDiceAmount = game.diceCounts[lastTurn.type] + jokersCount;
+			if (lastTurn.amount == (guessedDiceAmount)) { // calza is correct
 				io.sockets.in(lobbyCode).emit("sc-calza-round-end", {
 					winner: playerName,
 					dice: game.dice,
@@ -191,9 +179,9 @@ fs.readFile("client/index.html", function(err, html) {
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
 					lastTurn: lastTurn,
-					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
+					guessedDiceAmount: guessedDiceAmount
 				});
-				const winnner = {playerNum: game.nameColors[lastTurn.playerName], playerName: lastTurn.playerName}
+				const winner = {playerNum: game.nameColors[playerName], playerName: playerName}
 				if (game.participants[winner.playerNum].dice != amountDice) game.participants[winner.playerNum].dice += 1;
 				game.playersTurn = {playerNum: winner.playerNum, playerName: winner.playerName}
 				game.pacifico = false;
@@ -206,7 +194,7 @@ fs.readFile("client/index.html", function(err, html) {
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
 					lastTurn: lastTurn,
-					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
+					guessedDiceAmount: guessedDiceAmount
 				});
 				const loser = {playerNum: game.nameColors[playerName], playerName: playerName}
 				game.participants[loser.playerNum].dice -= 1;
@@ -270,10 +258,10 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 		dice[games[lobbyCode].participants[playerNum].playerName] = Array.from({length: games[lobbyCode].participants[playerNum].dice}, () => randomChoice([2, 3, 4, 5, 6, 12]))
 	}
 	const allDice = [].concat(...Object.values(dice))
-	const diceCounts = {};
+	const diceCounts = {"2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "12": 0};
 
 	for (const num of allDice) {
-		diceCounts[num] = diceCounts[num] ? diceCounts[num] + 1 : 1;
+		diceCounts[num] += 1;
 	}
 	games[lobbyCode].diceCounts = diceCounts;
 	games[lobbyCode].dice = dice;

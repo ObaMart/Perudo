@@ -4,6 +4,8 @@ socket.on("sc-test", (message) => {
     console.log(message)
 });
 
+const amountDice = 5;
+
 const urlParams = new URLSearchParams(window.location.search);
 const page = window.location.pathname
 
@@ -204,7 +206,15 @@ socket.on("sc-new-turn", data => {
 	const clientName = urlParams.get("playername");
 	let clientDice;
 	if (dice) {
-		clientDice = dice[clientName];
+		if (clientName in dice) {
+			clientDice = dice[clientName];
+		} else {
+			for (let i = 0; i < 5; i++) {
+				document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
+				document.getElementById(`rolled-dice${i+1}-ot`).style.display = "none";
+			}
+			document.getElementById("your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
+		}
 	}
 	chosenDiceType = 0;
 	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
@@ -224,12 +234,6 @@ socket.on("sc-new-turn", data => {
 				die2.style.display = "none";
 			}
 		}
-	} else {
-		for (let i = 0; i < 5; i++) {
-			document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
-			document.getElementById(`rolled-dice${i+1}-ot`).style.display = "none";
-		}
-		document.getElementById("your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
 	}
 	if (playersTurn.playerName == clientName) {
 		// Your turn
@@ -273,6 +277,7 @@ socket.on("sc-new-turn", data => {
 });
 
 socket.on("sc-dudo-round-end", data => {
+	document.getElementById("next-round-button").style.display = "none";
 	const {inflicter, inflicted, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
 	const clientName = urlParams.get("playername");
 	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
@@ -280,7 +285,7 @@ socket.on("sc-dudo-round-end", data => {
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
 	document.getElementById("winner-loser-action").innerHTML = 
-		`${loser} moet een dobbelsteen inleveren, want er zijn ${guessedDiceAmount} keer <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
+		`${loser} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
 	document.getElementById("your-turn").style.display = "none";
 	document.getElementById("others-turn").style.display = "none";
 	document.getElementById("reveal-round").style.display = "flex";
@@ -319,13 +324,84 @@ socket.on("sc-dudo-round-end", data => {
 		(async () => {
 			await setTimeout(async () => {
 				document.getElementById("next-round-button").style.display = "inline";
-			}, 5000)
+			}, 10000)
 		})();
 	}
 });
 
 socket.on("sc-calza-round-end", data => {
-
+	document.getElementById("next-round-button").style.display = "none";
+	const {inflicter, inflicted, winner, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
+	const clientName = urlParams.get("playername");
+	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
+	document.getElementById("inflicter-action").innerHTML = `${inflicter} denkt dat de gok van ${inflicted} exact klopt`;
+	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
+	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
+	if (winner && dice[winner].length != amountDice) {
+		document.getElementById("winner-loser-action").innerHTML = 
+			`${winner} krijgt een dobbelsteen erbij, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
+	} else if (winner) {
+		document.getElementById("winner-loser-action").innerHTML = 
+			`${winner} krijgt niks, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel, maar ${winner} heeft al ${amountDice} dobbelstenen`;
+	} else {
+		document.getElementById("winner-loser-action").innerHTML = 
+			`${loser} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
+	}
+	document.getElementById("your-turn").style.display = "none";
+	document.getElementById("others-turn").style.display = "none";
+	document.getElementById("reveal-round").style.display = "flex";
+	const container = document.getElementById("players-dice-container");
+	for (const name in dice) {
+		const diceList = dice[name];
+		const card = document.createElement("div");
+		card.classList.add("player-card", "standard-shadow");
+		card.style.backgroundColor = `var(--clr-${nameColors[name]});`;
+		const cardName = document.createElement("p");
+		cardName.classList.add("player-name", "standard-shadow");
+		cardName.innerHTML = name;
+		const cardDice = document.createElement("div");
+		cardDice.classList.add("card-dice")
+		let i = 0;
+		for (const die of diceList) {
+			const cardDie = document.createElement("img");
+			cardDie.src = `icons/dice/${die}.png`;
+			cardDie.classList.add("dice", "reveal-dice");
+			cardDie.id = `die${name}${i}`
+			cardDice.appendChild(cardDie);
+			i++;
+		}
+		if (name == winner && dice[winner].length != amountDice) {
+			const cardDie = document.createElement("img");
+			cardDie.src = `icons/dice/X.png`;
+			cardDie.classList.add("dice", "reveal-dice", "dissolve");
+			cardDie.id = `die${name}${i}`
+			cardDice.appendChild(cardDie);
+			i++;
+		}
+		card.appendChild(cardName);
+		card.appendChild(cardDice);
+		container.append(card);
+		if (name == loser) {
+			(async () => {
+				await setTimeout(async () => {
+					document.getElementById(`die${name}${i-1}`).classList.add("dissolve");
+				}, 2000);
+			})();
+		} else if (name == winner && dice[winner].length != amountDice) {
+			(async () => {
+				await setTimeout(async () => {
+					document.getElementById(`die${name}${i-1}`).classList.remove("dissolve");
+				}, 2000);
+			})();
+		}
+	}
+	if (clientName == ownerName) {
+		(async () => {
+			await setTimeout(async () => {
+				document.getElementById("next-round-button").style.display = "inline";
+			}, 5000);
+		})();
+	}
 });
 
 let chosenDiceType = 0;
