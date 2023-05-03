@@ -9,8 +9,8 @@ const io = require('socket.io')(server);
 // const server = http.Server(app);
 const PORT = 3000;
 let games = {};
-const minPlayers = 1;
-const maxPlayers = 6;
+const minPlayers = 2;
+const maxPlayers = 8;
 const amountDice = 5;
 
 fs.readFile("client/index.html", function(err, html) {
@@ -44,7 +44,7 @@ fs.readFile("client/index.html", function(err, html) {
 		//#region lobby
 		socket.on("cs-lobby-create", data => {
 			const {lobbyCode, playerName} = data;
-			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null}, joinedPlayers: [playerName], lobbyOwner: playerName}
+			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null}, joinedPlayers: [playerName], lobbyOwner: playerName}
 			socket.join(lobbyCode);
 		});
 		socket.on("cs-lobby-color-choice", data => {
@@ -278,8 +278,8 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 
 function endGame(lobbyCode) {
 	const game = games[lobbyCode];
-	const winner = {playerNum: Object.keys(game.participants)[0], playerName: Object.values(game.participants)[0]};
-	// win shit
+	const winner = {playerNum: Object.keys(game.participants)[0], playerName: Object.values(game.participants)[0].playerName};
+	io.sockets.in("lobbyCode").emit("cs-game-end", {lobbyCode: lobbyCode, winner: winner, winnerDice: Object.values(game.participants)[0].dice})
 }
 
 //#region general functions

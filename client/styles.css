@@ -1,11 +1,13 @@
 :root {
     /* color palette: */
-    --clr-1: hsl(239, 100%, 70%); /* blue */
+    --clr-1: hsl(204, 100%, 70%); /* light blue */
     --clr-2: hsl(155, 100%, 70%); /* green */
     --clr-3: hsl(62, 100%, 70%); /* yellow */
     --clr-4: hsl(32, 100%, 70%); /* orange */
     --clr-5: hsl(0, 100%, 70%); /* red */
-    --clr-6: hsl(284, 100%, 70%); /* purple */
+    --clr-6: hsl(322, 100%, 70%); /* pink */
+    --clr-7: hsl(284, 100%, 70%); /* purple */
+    --clr-8: hsl(239, 100%, 70%); /* dark blue */
     overflow: hidden;
 }
 
@@ -20,11 +22,13 @@
 
 @keyframes bg-color-animation {
     0% {background-color: var(--clr-1)}
-    16% {background-color: var(--clr-2)}
-    33% {background-color: var(--clr-3)}
-    50% {background-color: var(--clr-4)}
-    67% {background-color: var(--clr-5)}
-    83% {background-color: var(--clr-6)}
+    12% {background-color: var(--clr-2)}
+    25% {background-color: var(--clr-3)}
+    37% {background-color: var(--clr-4)}
+    50% {background-color: var(--clr-5)}
+    62% {background-color: var(--clr-6)}
+    75% {background-color: var(--clr-7)}
+    88% {background-color: var(--clr-8)}
     100% {background-color: var(--clr-1)}
 }
 
@@ -128,7 +132,7 @@
 
 .player-card {
     width: 40%;
-    height: 30%;
+    height: 20%;
     border: 3px solid white;
     border-radius: 30px;
     display: flex;

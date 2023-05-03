@@ -5,6 +5,7 @@ socket.on("sc-test", (message) => {
 });
 
 const amountDice = 5;
+const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6"]
 
 const urlParams = new URLSearchParams(window.location.search);
 const page = window.location.pathname
@@ -217,7 +218,7 @@ socket.on("sc-new-turn", data => {
 		}
 	}
 	chosenDiceType = 0;
-	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
+	document.getElementById("main").classList.remove(...allColors);
 	document.getElementById("main").classList.add(`clr${playersTurn.playerNum}`);
 	// document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn.playerNum}) !important`;
 	if (clientDice) {
@@ -280,7 +281,7 @@ socket.on("sc-dudo-round-end", data => {
 	document.getElementById("next-round-button").style.display = "none";
 	const {inflicter, inflicted, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
 	const clientName = urlParams.get("playername");
-	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
+	document.getElementById("main").classList.remove(...allColors);
 	document.getElementById("inflicter-action").innerHTML = `${inflicter} neemt de gok van ${inflicted} in twijfel`;
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
@@ -333,7 +334,7 @@ socket.on("sc-calza-round-end", data => {
 	document.getElementById("next-round-button").style.display = "none";
 	const {inflicter, inflicted, winner, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
 	const clientName = urlParams.get("playername");
-	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6");
+	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6"); // fix for 8 players
 	document.getElementById("inflicter-action").innerHTML = `${inflicter} denkt dat de gok van ${inflicted} exact klopt`;
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
@@ -423,6 +424,22 @@ function game_NextRound() {
 }
 
 //#endregion in-game
+
+//#region end screen
+socket.on("cs-game-end", data => {
+	const {lobbyCode, winner, winnerDice} = data;
+	window.location = `/winner.html?code=${lobbyCode}&b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
+})
+
+if (page == "/winner.html") {
+	const winnerName = urlParams.get("winnerName");
+	const backgroundColor = urlParams.get("color");
+	const winnerDice = urlParams.get("winnerDice");
+	document.getElementById("main").classList.remove(...allColors);
+	document.getElementById("main").classList.add(`clr${backgroundColor}`);
+	document.getElementById("winner-name").innerHTML = winnerName;
+	document.getElementById("winner-dice").innerHTML = winnerDice;
+}
 
 //#region general functions
 function randomChoice(arr) {
