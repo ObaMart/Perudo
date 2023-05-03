@@ -12,6 +12,8 @@ let games = {};
 const minPlayers = 2;
 const maxPlayers = 8;
 const amountDice = 5;
+// TODO: add log function + useful logs
+// TODO: name verification
 
 fs.readFile("client/index.html", function(err, html) {
 	if (err) throw err;
@@ -32,9 +34,12 @@ fs.readFile("client/index.html", function(err, html) {
 			}
 			games[lobbyCode].joinedPlayers.splice(games[lobbyCode].joinedPlayers.indexOf(playerName), 1);
 			for (let i = 1; i <= maxPlayers; i++) {
-				if (games[lobbyCode].seats[i] == playerName) {
+				if (games[lobbyCode].seats && games[lobbyCode].seats[i] == playerName) {
 					games[lobbyCode].seats[i] = null;
 					break;
+				} else if (games[lobbyCode].participants[i].playerName == playerName) {
+					delete games[lobbyCode].participants[i];
+					delete games[lobbyCode].dice[playerName];
 				}
 			}
 			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
@@ -151,7 +156,7 @@ fs.readFile("client/index.html", function(err, html) {
 				delete game.participants[loser.playerNum];
 				delete game.dice[loser.playerName];
 				const randomNewTurnNumber = randomChoice(Object.keys(game.participants))
-				game.playersTurn = {playerNum: randomNewTurnNumber, playerName: game.participants[randomNewTurnNumber]}
+				game.playersTurn = {playerNum: randomNewTurnNumber, playerName: game.participants[randomNewTurnNumber].playerName}
 				game.pacifico = false;
 			} else if (game.participants[loser.playerNum].dice == 1 && game.participants[loser.playerNum].beenPacifico == false) {
 				game.participants[loser.playerNum].beenPacifico = true;
@@ -279,7 +284,8 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 function endGame(lobbyCode) {
 	const game = games[lobbyCode];
 	const winner = {playerNum: Object.keys(game.participants)[0], playerName: Object.values(game.participants)[0].playerName};
-	io.sockets.in("lobbyCode").emit("cs-game-end", {lobbyCode: lobbyCode, winner: winner, winnerDice: Object.values(game.participants)[0].dice})
+	console.log(`Game ends with winner ${winner.playerName}`)
+	io.sockets.in(lobbyCode).emit("sc-game-end", {lobbyCode: lobbyCode, winner: winner, winnerDice: Object.values(game.participants)[0].dice})
 }
 
 //#region general functions

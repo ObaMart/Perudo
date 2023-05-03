@@ -1,9 +1,13 @@
 const socket = io();
-socket.emit("cs-test", "Connection received from client!")
-socket.on("sc-test", (message) => {
-    console.log(message)
-});
 
+/** TODO:
+ * Page verification on every socket.on
+ * fix pacifico gamerules (no type change except for brokeboys)
+ * add preselection on dice type in bid phase
+ * add preselection on amount of dice in bid phase & a +1 button
+ * warning when bidding high amount of dice
+ * fix "seats" stuff
+ */
 const amountDice = 5;
 const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6"]
 
@@ -109,8 +113,6 @@ if (page == "/lobby.html") {
 	document.getElementById("lobby-code").innerHTML = lobbyCode
 }
 socket.on("sc-lobby-player-update", data => {
-	// console.log(data)
-	// console.log(Object.entries(data));
 	const clientName = urlParams.get("playername");
 	Object.entries(data).forEach(([colorNum, playerName]) => {
 		if (playerName) {
@@ -131,7 +133,6 @@ function lobby_ChooseColor(colorNum) {
 	}
 	const playerName = urlParams.get("playername");
 	socket.emit("cs-lobby-color-choice", {playerName: playerName, color: colorNum, lobbyCode: lobbyCode});
-	// console.log({playerName: playerName, color: colorNum, lobbyCode: lobbyCode})
 }
 
 function lobby_StartGame() {
@@ -190,19 +191,12 @@ function game_Bid() {
 		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}});
 	} else {
 		alert("Jouw bod is ongeldig. Probeer het opnieuw met een ander bod.");
-		console.log(`Chosen dice type: ${chosenDiceType}, chosen bid amount: ${chosenBidAmount}`);
-		console.log(`Last dice type: ${lastDiceType}, last bid amount: ${lastBidAmount}`);
-		console.log(chosenDiceType >= lastDiceType)
-		console.log(chosenBidAmount > lastBidAmount)
-		console.log(lastDiceType != 12);
-		console.log(chosenDiceType >= lastDiceType && chosenBidAmount > lastBidAmount && lastDiceType != 12)
 	}
 }
 
 socket.on("sc-new-turn", data => {
 	const {lobbyCode, playersTurn, lastTurn, pacifico, dice} = data;
 	document.getElementById("players-dice-container").innerHTML = "";
-	console.log(`Pacifico: ${pacifico}`);
 	lastTurnGlobal = lastTurn;
 	const clientName = urlParams.get("playername");
 	let clientDice;
@@ -282,7 +276,7 @@ socket.on("sc-dudo-round-end", data => {
 	const {inflicter, inflicted, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
 	const clientName = urlParams.get("playername");
 	document.getElementById("main").classList.remove(...allColors);
-	document.getElementById("inflicter-action").innerHTML = `${inflicter} neemt de gok van ${inflicted} in twijfel`;
+	document.getElementById("inflicter-action").innerHTML = `${inflicter} betwijfelt de gok van ${inflicted}`;
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
 	document.getElementById("winner-loser-action").innerHTML = 
@@ -400,7 +394,7 @@ socket.on("sc-calza-round-end", data => {
 		(async () => {
 			await setTimeout(async () => {
 				document.getElementById("next-round-button").style.display = "inline";
-			}, 5000);
+			}, 10000);
 		})();
 	}
 });
@@ -419,16 +413,20 @@ function game_NextRound() {
 		const clientName = urlParams.get("playername");
 		const lobbyCode = urlParams.get("code");
 		socket.emit("cs-next-round", {playerName: clientName, lobbyCode: lobbyCode});
-		// console.log("Requested next round");
 	}
 }
 
 //#endregion in-game
 
 //#region end screen
-socket.on("cs-game-end", data => {
+socket.on("sc-game-end", data => {
 	const {lobbyCode, winner, winnerDice} = data;
-	window.location = `/winner.html?code=${lobbyCode}&b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
+	(async () => {
+		await setTimeout(async () => {
+			window.location = `/winner.html?code=${lobbyCode}&b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
+		}, 10000);
+	})();
+	
 })
 
 if (page == "/winner.html") {
@@ -440,6 +438,7 @@ if (page == "/winner.html") {
 	document.getElementById("winner-name").innerHTML = winnerName;
 	document.getElementById("winner-dice").innerHTML = winnerDice;
 }
+//#endregion end screen
 
 //#region general functions
 function randomChoice(arr) {
