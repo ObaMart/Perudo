@@ -124,11 +124,46 @@ fs.readFile("client/index.html", function(err, html) {
 			io.sockets.in(lobbyCode).emit("sc-new-turn", {
 				lobbyCode: lobbyCode,
 				playersTurn: nextPlayersTurn,
-				lastTurn: bid,
+				lastTurn: {...bid, playerName: playerName},
 				pacifico: game.pacifico,
-				lastPlayerName: playerName,
+				// lastPlayerName: playerName,
 			});
 			game.playersTurn = nextPlayersTurn;
+		});
+
+		socket.on("cs-game-dudo", data => {
+			const {lobbyCode, playerName, lastTurn} = data;
+			const game = games[lobbyCode];
+			const jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
+			// console.log(jokersCount);
+			if (lastTurn.amount > (game.diceCounts[lastTurn.type] + jokersCount)) { // guess was incorrect -> dudo was correct
+				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
+					loser: lastTurn.playerName,
+					dice: game.dice,
+					inflicter: playerName,
+					inflicted: lastTurn.playerName,
+					nameColors: game.nameColors,
+					ownerName: game.lobbyOwner,
+					lastTurn: lastTurn
+				});
+				// console.log("Correct dudo:");
+			} else { // guess was correct -> dudo was incorrect
+				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
+					loser: playerName,
+					dice: game.dice,
+					inflicter: playerName,
+					inflicted: lastTurn.playerName,
+					nameColors: game.nameColors,
+					ownerName: game.lobbyOwner,
+					lastTurn: lastTurn
+				});
+				// console.log("Incorrect dudo:");
+			}
+			// console.log(`Guess: ${lastTurn.amount} * [${lastTurn.type}], count: ${game.diceCounts[lastTurn.type]}, joker count: ${game.diceCounts[12]}`)
+		});
+
+		socket.on("cs-game-calza", data => {
+			const {lobbyCode, playerName, lastTurn} = data;
 		});
 		//#endregion game
 	});
@@ -143,9 +178,13 @@ function loopGame(lobbyCode) {
 		console.log(`looping game ${lobbyCode}!`);
 		const game = games[lobbyCode];
 		game.participants = {};
+		game.nameColors = {};
 		game.pacifico = false;
 		for (const playerNum in game.seats) {
-			if (game.seats[playerNum]) game.participants[playerNum] = {playerName: game.seats[playerNum], dice: 5};
+			if (game.seats[playerNum]) {
+				game.participants[playerNum] = {playerName: game.seats[playerNum], dice: 5};
+				game.nameColors[game.seats[playerNum]] = playerNum;
+			}
 		}
 		delete game.seats;
 		const startingPlayer = randomChoice(Object.keys(game.participants));
@@ -160,6 +199,15 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 	for (const playerNum in games[lobbyCode].participants) {
 		dice[games[lobbyCode].participants[playerNum].playerName] = Array.from({length: games[lobbyCode].participants[playerNum].dice}, () => randomChoice([2, 3, 4, 5, 6, 12]))
 	}
+	const allDice = [].concat(...Object.values(dice))
+	const diceCounts = {};
+
+	for (const num of allDice) {
+		diceCounts[num] = diceCounts[num] ? diceCounts[num] + 1 : 1;
+	}
+	games[lobbyCode].diceCounts = diceCounts;
+	games[lobbyCode].dice = dice;
+	
 	io.sockets.in(lobbyCode).emit("sc-new-turn", {
 		lobbyCode: lobbyCode,
 		playersTurn: startingPlayer,
@@ -169,9 +217,6 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 		lastPlayerName: null
 	});
 }
-
-// function newTurn(lobbyCode, playersTurn, lastTurn) {
-// }
 
 //#region general functions
 function randomChoice(arr) {

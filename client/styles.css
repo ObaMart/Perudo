@@ -6,6 +6,7 @@
     --clr-4: hsl(32, 100%, 70%); /* orange */
     --clr-5: hsl(0, 100%, 70%); /* red */
     --clr-6: hsl(284, 100%, 70%); /* purple */
+    overflow: hidden;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -118,7 +119,7 @@
     height: 60vh;
     width: 80vw;
     justify-content: space-evenly;
-    align-items: space-evenly;
+    align-items: center;
 }
 
 .player-card {
@@ -249,7 +250,7 @@ img.dice {
     cursor: pointer;
 }
 
-#your-turn, #others-turn {
+#your-turn, #others-turn, #reveal-round {
     flex-flow: column nowrap;
     align-items: center;
     justify-content: center;
@@ -285,8 +286,9 @@ img.dice {
     white-space: nowrap;
 }
 
-#reveal-round {
-
+.reveal-dice {
+    height: 5vh;
+    white-space: nowrap;
 }
 
 .game-buttons-container {
@@ -336,4 +338,13 @@ input[type=number] {
 
 .unchosen {
     opacity: 0.5;
+}
+
+.card-dice {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 90%;
+    margin-top: 2vh;
 }

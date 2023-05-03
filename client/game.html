@@ -64,7 +64,13 @@
             </div>
 
             <div id="reveal-round" style="display: none">
+                <h3 class="mini-title standard-shadow" style="margin-top: -2vh;"><span id="inflicter-action">SpelerX (neemt de gok van SpelerY in twijfel)/(denkt dat de gok van SpelerY exact klopt)</span>(<span id="guess-amount">X</span> keer <img src="icons/dice/X.png" id="guess-type" alt="dice" class="dice small-dice">)</h3>
+                <p class="standard-text standard-shadow" style="margin-top: -3vh;">Resultaat van afgelopen ronde:</p>
+                <div id="players-dice-container" class="players">
 
+                </div>
+                <p id="winner-loser-action" class="standard-text standard-shadow">SpelerX/Y (moet een dobbelsteen inleveren)/(krijgt een dobbelsteen)</p>
+                <button class="main-button standard-shadow" onclick="game_NextRound()" id="next-round-button" style="display: none">Volgende ronde</button>
             </div>
 
         </div>
