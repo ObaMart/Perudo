@@ -8,18 +8,31 @@
 </head>
 <body>
     <div class="brightness">
-        <img class="brightness-icon" src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="toggleBrightnessSlider()">
+        <img src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="toggleBrightnessSlider()">
         <input type="range" min="0" max="1" value="0.9" step="0.01" id="brightness-slider" style="opacity: 0">
     </div>
     <div class="main">
         <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
         <div class="back-to-home standard-shadow" onclick="home()">Verlaat lobby</div>
         <div class="home-container">
-
-            <div class="header">
-                <h1 class="main-title standard-shadow">Lobby</h1>
-                <h2 class="sub-title standard-shadow" id="lobby-code">Als hier geen code staat is er iets foutgegaan</h2>
+            
+            <div class="header-container">
+                <div></div>
+                <div class="header">
+                    <h1 class="main-title standard-shadow">Lobby</h1>
+                    <h2 class="sub-title standard-shadow" id="lobby-code">Als hier geen code staat is er iets foutgegaan</h2>
+                </div>
+                <div>
+                    <img src="icons/settings.svg" alt="Settings icon" id="settings-icon" onclick="lobby_OpenSettings()">
+                </div>
             </div>
+            <dialog id="settings-dialog">
+                <div>
+                    <h4>Dit tabblad is nog niet klaar!</h4>
+                    <button onclick="lobby_CancelSettings()">Annuleren</button>
+                    <button onclick="lobby_SaveSettings()">Klaar</button>
+                </div>
+            </dialog>
             
             <div class="players">
                 <div class="player-card standard-shadow" id="player1" style="background-color: var(--clr-1); cursor: pointer" onclick="lobby_ChooseColor(1)">
@@ -47,7 +60,7 @@
                     <p class="player-name standard-shadow" id="player8-name">Deze kleur is beschikbaar, klik om te kiezen!</p>
                 </div>
             </div>
-            <button class="main-button standard-shadow" onclick="lobby_StartGame()" id="start-game-button">Start game</button>
+            <button class="main-button standard-shadow" onclick="lobby_StartGame()" id="start-game-button">Start spel</button>
 
         </div>
     </div>

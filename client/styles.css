@@ -103,9 +103,17 @@
     align-items: center;
 }
 
-.header {
+.header-container {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.header-container > div {
+    min-width: 10vw;
     display: flex;
     flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
 }
 
 .main-title {
@@ -147,6 +155,27 @@
     flex-flow: column nowrap;
     justify-content: center;
     align-items: center;
+}
+
+dialog {
+    border: 3px solid white;
+    animation: bg-color-animation 30s linear infinite;
+    border-radius: 30px;
+    width: 50%;
+    height: 50%;
+    margin: auto;
+}
+
+dialog > div {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+dialog > div > button {
+    width: 40%;
 }
 
 .player-name {
@@ -210,11 +239,18 @@ input {
     cursor: pointer;
 }
 
-img.brightness-icon {
+img#brightness-icon {
     z-index: 200;
     position: absolute;
     right: 0;
     top: 0;
+    width: 5vw;
+    height: 5vw;
+    filter: invert(100%) drop-shadow(2px 2px 5px #555);
+}
+
+img#settings-icon {
+    z-index: 200;
     width: 5vw;
     height: 5vw;
     filter: invert(100%) drop-shadow(2px 2px 5px #555);
@@ -372,4 +408,14 @@ input[type=number] {
 
 .pacifico-label {
     color: hsl(0, 100%, 80%);
+}
+
+.flex-row {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.flex-column {
+    display: flex;
+    flex-flow: column nowrap;
 }

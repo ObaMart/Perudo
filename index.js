@@ -2,7 +2,6 @@
 const fs = require('fs');
 const http = require('http');
 const express = require('express');
-const { start } = require('repl');
 const app = express();
 const server = http.Server(app);
 const io = require('socket.io')(server);
@@ -16,8 +15,8 @@ const maxDice = 5;
  * Rulesets (pacifico rules, amount of dice, etc.)
  * add log function + useful logs
  * name verification
- * bid verification
- * socket.on verification
+ * bid verification (check if person is allowed to bid + if bid is valid)
+ * general socket.on verification (check if person has permission)
  */
 
 fs.readFile("client/index.html", function(err, html) {
@@ -47,7 +46,7 @@ fs.readFile("client/index.html", function(err, html) {
 					delete games[lobbyCode].dice[playerName];
 				}
 			}
-			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
+			if (games[lobbyCode].seats) io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
 		})
 		//#endregion home
 

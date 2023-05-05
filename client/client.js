@@ -3,10 +3,9 @@ const socket = io();
 /** TODO:
  * Page verification on every socket.on
  * add preselection on amount of dice in bid phase & a +1 button
- * warning when bidding high amount of dice
- * fix "seats" stuff
  * switch from document.getElementById to document.querySelector
  * Rulebook (html/css)
+ * ***responsiveness***
  */
 const maxDice = 5;
 const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"];
@@ -110,6 +109,7 @@ if (page == "/lobby.html") {
 		socket.emit("cs-lobby-create", {lobbyCode: lobbyCode, playerName: clientName});
 	} else {
 		document.getElementById("start-game-button").style.display = "none";
+		document.getElementById("settings-icon").style.display = "none";
 		socket.emit("cs-lobby-join", {lobbyCode: lobbyCode, playerName: clientName});
 	}
 	document.getElementById("lobby-code").innerHTML = lobbyCode
@@ -142,6 +142,21 @@ function lobby_StartGame() {
 		const clientName = urlParams.get("playername");
 		socket.emit("cs-lobby-start", {playerName: clientName, lobbyCode: lobbyCode});
 	}
+}
+
+function lobby_OpenSettings() {
+	const dialog = document.querySelector("#settings-dialog");
+	dialog.showModal();
+}
+
+function lobby_CancelSettings() {
+	const dialog = document.querySelector("#settings-dialog");
+	dialog.close();
+}
+
+function lobby_SaveSettings() {
+	const dialog = document.querySelector("#settings-dialog");
+	dialog.close();
 }
 //#endregion lobby
 
