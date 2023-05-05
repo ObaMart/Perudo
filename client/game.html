@@ -11,7 +11,7 @@
         <img class="brightness-icon" src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="toggleBrightnessSlider()">
         <input type="range" min="0" max="1" value="0.9" step="0.01" id="brightness-slider" style="opacity: 0">
     </div>
-    <div class="main" id="main">
+    <div class="main">
         <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
         <div class="back-to-home standard-shadow" onclick="home()">Verlaat spel</div>
         <div class="home-container">
@@ -22,17 +22,16 @@
             <div id="your-turn" style="display: none">
                 <h3 class="mini-title standard-shadow">Jij bent aan de beurt!</h3>
                 <p class="standard-text standard-shadow" id="your-dice-text">Jouw dobbelstenen:</p>
-                <div id="rolled-dice-yt">
+                <div class="rolled-dice-list">
                     <img id="rolled-dice1-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice2-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice3-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice4-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice5-yt" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                 </div>
-                <p id="last-turn-yt" class="standard-shadow">
-                    Laatste bod 
-                    (<span id="last-player-yt">laatste speler</span>): <span id="last-player-bid-amount-yt">X</span> 
-                    keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" id="last-player-bid-type-yt">
+                <p class="last-turn standard-shadow" class="standard-shadow">
+                    Laatste bod (<span last-player-name>laatste speler</span>): <span last-player-bid-amount>X</span> 
+                    keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" last-player-bid-type>
                 </p>
                 <div class="game-buttons-container" id="game-buttons-container">
                     <button id="dudo" class="main-button standard-shadow" onclick="game_Dudo()">Ik geloof het niet</button>
@@ -51,16 +50,19 @@
             </div>
 
             <div id="others-turn" style="display: none">
-                <h3 class="mini-title standard-shadow"><span id="current-player-ot">Huidige speler</span> is aan het denken...</h2>
+                <h3 class="mini-title standard-shadow"><span current-player>Huidige speler</span> is aan het denken...</h2>
                 <p class="standard-text standard-shadow">Jouw dobbelstenen:</p>
-                <div id="rolled-dice-ot">
+                <div class="rolled-dice-list">
                     <img id="rolled-dice1-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice2-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice3-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice4-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                     <img id="rolled-dice5-ot" src="icons/dice/X.png" alt="Dice" class="dice medium-dice rolled-dice">
                 </div>
-                <p id="last-turn-ot" class="standard-shadow">Laatste bod (<span id="last-player-ot">laatste speler</span>): <span id="last-player-bid-amount-ot">X</span> keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" id="last-player-bid-type-ot"></p>
+                <p class="last-turn standard-shadow" class="standard-shadow">
+                    Laatste bod (<span last-player-name>laatste speler</span>): <span last-player-bid-amount>X</span> 
+                    keer <img src="icons/dice/X.png" alt="Last player's chosen dice" class="dice small-dice" last-player-bid-type>
+                </p>
             </div>
 
             <div id="reveal-round" style="display: none">

@@ -3,21 +3,18 @@ const socket = io();
 /** TODO:
  * Page verification on every socket.on
  * fix pacifico gamerules (no type change except for brokeboys)
- * add preselection on dice type in bid phase
+ * add pacifico "notification" on game screen
  * add preselection on amount of dice in bid phase & a +1 button
  * warning when bidding high amount of dice
  * fix "seats" stuff
+ * switch from document.getElementById to document.querySelector
+ * Rulebook (html/css)
  */
-const amountDice = 5;
-const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6"]
+const maxDice = 5;
+const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"]
 
 const urlParams = new URLSearchParams(window.location.search);
 const page = window.location.pathname
-
-function send() {
-    const message = document.getElementById("inp-test").value;
-    socket.emit("cs-log", message);
-}
 
 //#region home functions
 function home_JoinWithCode() {
@@ -154,8 +151,6 @@ if (page == "/game.html") {
 	const clientName = urlParams.get("playername");
 	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
 }
-// Test if clients are still in socket.io room after game starts (switch html pages)
-
 
 let lastTurnGlobal;
 
@@ -177,6 +172,12 @@ function game_Bid() {
 	const lobbyCode = urlParams.get("code");
 	const clientName = urlParams.get("playername");
 	const chosenBidAmount = parseInt(document.getElementById("bid-amount-input").value);
+	if (chosenBidAmount > 40) {
+		alert("Je kan niet meer dan 40 dobbelstenen bieden, want er kunnen maximaal 40 dobbelstenen in het spel zitten.");
+		return;
+	} else if (chosenBidAmount > 10) {
+		if (!confirm(`Weet je zeker dat je ${chosenBidAmount} dobbelstenen wilt bieden?`)) return;
+	}
 	if (
 		(
 			(chosenDiceType > lastDiceType && chosenBidAmount >= lastBidAmount) // verhoog soort dobbelstenen
@@ -204,7 +205,7 @@ socket.on("sc-new-turn", data => {
 		if (clientName in dice) {
 			clientDice = dice[clientName];
 		} else {
-			for (let i = 0; i < 5; i++) {
+			for (let i = 0; i < maxDice; i++) {
 				document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
 				document.getElementById(`rolled-dice${i+1}-ot`).style.display = "none";
 			}
@@ -212,11 +213,11 @@ socket.on("sc-new-turn", data => {
 		}
 	}
 	chosenDiceType = 0;
-	document.getElementById("main").classList.remove(...allColors);
-	document.getElementById("main").classList.add(`clr${playersTurn.playerNum}`);
-	// document.getElementById("main").style.backgroundColor = `var(--clr-${playersTurn.playerNum}) !important`;
+	document.querySelector(".main").classList.remove(...allColors);
+	document.querySelector(".main").classList.add(`clr${playersTurn.playerNum}`);
+	// document.querySelector(".main").style.backgroundColor = `var(--clr-${playersTurn.playerNum}) !important`;
 	if (clientDice) {
-		for (let i = 0; i < 5; i++) {
+		for (let i = 0; i < maxDice; i++) {
 			const die = document.getElementById(`rolled-dice${i+1}-yt`);
 			const die2 = document.getElementById(`rolled-dice${i+1}-ot`);
 			if (clientDice[i]) {
@@ -230,121 +231,54 @@ socket.on("sc-new-turn", data => {
 			}
 		}
 	}
+	if (!lastTurn) {
+		document.querySelectorAll(".last-turn").forEach(el => {el.style.display = "none"});
+		lastDiceType = 0;
+		lastBidAmount = 0;
+	} else {
+		document.querySelectorAll(".last-turn").forEach(el => {el.style.display = "inline"});
+		lastDiceType = lastTurn.type;
+		lastBidAmount = lastTurn.amount;
+		document.querySelectorAll("[last-player-name]").forEach(el => el.innerHTML = lastTurn.playerName);
+		document.querySelectorAll("[last-player-bid-amount]").forEach(el => el.innerHTML = lastTurn.amount);
+		document.querySelectorAll("[last-player-bid-type]").forEach(el => el.src = `icons/dice/${lastTurn.type}.png`);
+	}
 	if (playersTurn.playerName == clientName) {
 		// Your turn
 		for (const x of [2, 3, 4, 5, 6, 12]) {
 			document.getElementById(`dice${x}`).classList.add("unchosen");
 		}
 		document.getElementById("bid-amount-input").value = "";
-		document.getElementById("your-turn").style.display = "flex";
-		document.getElementById("others-turn").style.display = "none";
-		document.getElementById("reveal-round").style.display = "none";
-		if (!lastTurn) {
-			document.getElementById("bid").innerHTML = "Bieden";
-			document.getElementById("game-buttons-container").style.display = "none";
-			document.getElementById("last-turn-yt").style.display = "none";
-			lastDiceType = 0;
-			lastBidAmount = 0;
-		} else {
-			document.getElementById("bid").innerHTML = "Verhogen";
-			document.getElementById("game-buttons-container").style.display = "flex";
-			document.getElementById("last-turn-yt").style.display = "inline"; // CHECK THIS
-			lastDiceType = lastTurn.type;
-			lastBidAmount = lastTurn.amount;
-			document.getElementById("last-player-yt").innerHTML = lastTurn.playerName;
-			document.getElementById("last-player-bid-amount-yt").innerHTML = lastTurn.amount;
-			document.getElementById("last-player-bid-type-yt").src = `icons/dice/${lastTurn.type}.png`;
-		}
+		showGamePage("your-turn")
+		if (lastTurn) game_Select(lastTurn.type);
+		document.getElementById("bid").innerHTML = lastTurn ? "Verhogen" : "Bieden";
+		document.getElementById("game-buttons-container").style.display = lastTurn ? "flex" : "none";
 	} else {
 		// Others turn
-		document.getElementById("your-turn").style.display = "none";
-		document.getElementById("others-turn").style.display = "flex";
-		document.getElementById("reveal-round").style.display = "none";
-		if (!lastTurn) {
-			document.getElementById("last-turn-ot").style.display = "none";
-		} else {
-			document.getElementById("last-player-ot").innerHTML = lastTurn.playerName;
-			document.getElementById("last-player-bid-amount-ot").innerHTML = lastTurn.amount;
-			document.getElementById("last-player-bid-type-ot").src = `icons/dice/${lastTurn.type}.png`;
-		}
-		document.getElementById("current-player-ot").innerHTML = playersTurn.playerName;
+		showGamePage("others-turn")
+		document.querySelector("[current-player]").innerHTML = playersTurn.playerName;
 	}
 });
 
-socket.on("sc-dudo-round-end", data => {
-	document.getElementById("next-round-button").style.display = "none";
-	const {inflicter, inflicted, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
+socket.on("sc-round-end", data => {
+	const {inflicter, inflicted, dice, nameColors, ownerName, lastTurn, guessedDiceAmount, winner, loser} = data;
 	const clientName = urlParams.get("playername");
-	document.getElementById("main").classList.remove(...allColors);
+	showGamePage("reveal-round");
+	document.getElementById("next-round-button").style.display = "none";
+	document.querySelector(".main").classList.remove(...allColors);
 	document.getElementById("inflicter-action").innerHTML = `${inflicter} betwijfelt de gok van ${inflicted}`;
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
-	document.getElementById("winner-loser-action").innerHTML = 
-		`${loser} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
-	document.getElementById("your-turn").style.display = "none";
-	document.getElementById("others-turn").style.display = "none";
-	document.getElementById("reveal-round").style.display = "flex";
-	const container = document.getElementById("players-dice-container");
-	for (const name in dice) {
-		const diceList = dice[name];
-		const card = document.createElement("div");
-		card.classList.add("player-card", "standard-shadow");
-		card.style.backgroundColor = `var(--clr-${nameColors[name]});`;
-		const cardName = document.createElement("p");
-		cardName.classList.add("player-name", "standard-shadow");
-		cardName.innerHTML = name;
-		const cardDice = document.createElement("div");
-		cardDice.classList.add("card-dice")
-		let i = 0;
-		for (const die of diceList) {
-			const cardDie = document.createElement("img");
-			cardDie.src = `icons/dice/${die}.png`;
-			cardDie.classList.add("dice", "reveal-dice");
-			cardDie.id = `die${name}${i}`
-			cardDice.appendChild(cardDie);
-			i++;
-		}
-		card.appendChild(cardName);
-		card.appendChild(cardDice);
-		container.append(card);
-		if (name == loser) {
-			(async () => {
-				await setTimeout(async () => {
-					document.getElementById(`die${name}${i-1}`).classList.add("dissolve");
-				}, 2000)
-			})();
-		}
-	}
-	if (clientName == ownerName) {
-		(async () => {
-			await setTimeout(async () => {
-				document.getElementById("next-round-button").style.display = "inline";
-			}, 10000)
-		})();
-	}
-});
-
-socket.on("sc-calza-round-end", data => {
-	document.getElementById("next-round-button").style.display = "none";
-	const {inflicter, inflicted, winner, loser, dice, nameColors, ownerName, lastTurn, guessedDiceAmount} = data;
-	const clientName = urlParams.get("playername");
-	document.getElementById("main").classList.remove("clr1","clr2","clr3","clr4","clr5","clr6"); // fix for 8 players
-	document.getElementById("inflicter-action").innerHTML = `${inflicter} denkt dat de gok van ${inflicted} exact klopt`;
-	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
-	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
-	if (winner && dice[winner].length != amountDice) {
+	if (winner && dice[winner].length != maxDice) {
 		document.getElementById("winner-loser-action").innerHTML = 
 			`${winner} krijgt een dobbelsteen erbij, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
 	} else if (winner) {
 		document.getElementById("winner-loser-action").innerHTML = 
-			`${winner} krijgt niks, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel, maar ${winner} heeft al ${amountDice} dobbelstenen`;
+			`${winner} krijgt niks, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel, maar ${winner} heeft al ${maxDice} dobbelstenen`;
 	} else {
 		document.getElementById("winner-loser-action").innerHTML = 
 			`${loser} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
 	}
-	document.getElementById("your-turn").style.display = "none";
-	document.getElementById("others-turn").style.display = "none";
-	document.getElementById("reveal-round").style.display = "flex";
 	const container = document.getElementById("players-dice-container");
 	for (const name in dice) {
 		const diceList = dice[name];
@@ -355,7 +289,7 @@ socket.on("sc-calza-round-end", data => {
 		cardName.classList.add("player-name", "standard-shadow");
 		cardName.innerHTML = name;
 		const cardDice = document.createElement("div");
-		cardDice.classList.add("card-dice")
+		cardDice.classList.add("card-dice");
 		let i = 0;
 		for (const die of diceList) {
 			const cardDie = document.createElement("img");
@@ -365,7 +299,7 @@ socket.on("sc-calza-round-end", data => {
 			cardDice.appendChild(cardDie);
 			i++;
 		}
-		if (name == winner && dice[winner].length != amountDice) {
+		if (winner && name == winner && dice[winner].length != maxDice) {
 			const cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/X.png`;
 			cardDie.classList.add("dice", "reveal-dice", "dissolve");
@@ -376,13 +310,13 @@ socket.on("sc-calza-round-end", data => {
 		card.appendChild(cardName);
 		card.appendChild(cardDice);
 		container.append(card);
-		if (name == loser) {
+		if (loser && name == loser) {
 			(async () => {
 				await setTimeout(async () => {
 					document.getElementById(`die${name}${i-1}`).classList.add("dissolve");
 				}, 2000);
 			})();
-		} else if (name == winner && dice[winner].length != amountDice) {
+		} else if (winner &&name == winner && dice[winner].length != maxDice) {
 			(async () => {
 				await setTimeout(async () => {
 					document.getElementById(`die${name}${i-1}`).classList.remove("dissolve");
@@ -398,6 +332,28 @@ socket.on("sc-calza-round-end", data => {
 		})();
 	}
 });
+
+function showGamePage(page) {
+	switch (page) {
+		case "your-turn":
+			document.querySelectorAll("#others-turn, #reveal-round").forEach(el => {el.style.display = "none"});
+			document.querySelector("#your-turn").style.display = "flex";
+			break;
+
+		case "others-turn":
+			document.querySelectorAll("#your-turn, #reveal-round").forEach(el => {el.style.display = "none"});
+			document.querySelector("#others-turn").style.display = "flex";
+			break;
+
+		case "reveal-round":
+			document.querySelectorAll("#your-turn, #others-turn").forEach(el => {el.style.display = "none"});
+			document.querySelector("#reveal-round").style.display = "flex";
+			break;
+
+		default:
+			break;
+	}
+}
 
 let chosenDiceType = 0;
 function game_Select(diceNumber) {
@@ -433,8 +389,8 @@ if (page == "/winner.html") {
 	const winnerName = urlParams.get("winnerName");
 	const backgroundColor = urlParams.get("color");
 	const winnerDice = urlParams.get("winnerDice");
-	document.getElementById("main").classList.remove(...allColors);
-	document.getElementById("main").classList.add(`clr${backgroundColor}`);
+	document.querySelector(".main").classList.remove(...allColors);
+	document.querySelector(".main").classList.add(`clr${backgroundColor}`);
 	document.getElementById("winner-name").innerHTML = winnerName;
 	document.getElementById("winner-dice").innerHTML = winnerDice;
 }

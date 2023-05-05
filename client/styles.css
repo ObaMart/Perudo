@@ -66,6 +66,14 @@
     background-color: var(--clr-6) !important;
 }
 
+.clr7 {
+    background-color: var(--clr-7) !important;
+}
+
+.clr8 {
+    background-color: var(--clr-8) !important;
+}
+
 .main-brightness-overlay {
     position: absolute;
     z-index: 1;
@@ -264,7 +272,7 @@ img.dice {
     justify-content: center;
 }
 
-#last-turn-yt, #last-turn-ot {
+.last-turn {
     font-size: 3vh;
     color: white;
     line-height: 3vh;
@@ -278,7 +286,7 @@ img.dice {
     margin-bottom: 2vh;
 }
 
-#rolled-dice-yt, #rolled-dice-ot {
+.rolled-dice-list {
     display: flex;
     flex-flow: row nowrap;
     align-items: center;

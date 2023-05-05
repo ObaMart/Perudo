@@ -11,9 +11,14 @@ const PORT = 3000;
 let games = {};
 const minPlayers = 2;
 const maxPlayers = 8;
-const amountDice = 5;
-// TODO: add log function + useful logs
-// TODO: name verification
+const maxDice = 5;
+/** TODO:
+ * Rulesets (pacifico rules, amount of dice, etc.)
+ * add log function + useful logs
+ * name verification
+ * bid verification
+ * socket.on verification
+ */
 
 fs.readFile("client/index.html", function(err, html) {
 	if (err) throw err;
@@ -49,6 +54,10 @@ fs.readFile("client/index.html", function(err, html) {
 		//#region lobby
 		socket.on("cs-lobby-create", data => {
 			const {lobbyCode, playerName} = data;
+			if (lobbyCode in games) {
+				socket.emit("sc-error-fatal", {lobbyCode: lobbyCode});
+				return;
+			}
 			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null}, joinedPlayers: [playerName], lobbyOwner: playerName}
 			socket.join(lobbyCode);
 		});
@@ -61,15 +70,17 @@ fs.readFile("client/index.html", function(err, html) {
 			const {lobbyCode, playerName} = data;
 			if (!(lobbyCode in games)) {
 				socket.emit("sc-error-fatal", {playerName: playerName, errorMessage: `Deze lobbycode (${lobbyCode}) is ongeldig. Probeer het opnieuw.`});
+				return;
 			} else if (games[lobbyCode].joinedPlayers.includes(playerName)) {
 				socket.emit("sc-error-fatal", {playerName: playerName, errorMessage: `Deze naam (${playerName}) is al gekozen. Kies een unieke naam en join opnieuw.`});
+				return;
 			} else if (games[lobbyCode].joinedPlayers.length == maxPlayers) {
 				socket.emit("sc-error-fatal", {playerName: playerName, errorMessage: `Deze lobby (${lobbyCode}) zit vol. (${maxPlayers} spelers)`});
-			} else {
-				games[lobbyCode].joinedPlayers.push(playerName);
-				socket.join(lobbyCode);
-				io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
+				return;
 			}
+			games[lobbyCode].joinedPlayers.push(playerName);
+			socket.join(lobbyCode);
+			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
 		});
 		socket.on("cs-lobby-start", data => {
 			const {playerName, lobbyCode} = data;
@@ -79,7 +90,7 @@ fs.readFile("client/index.html", function(err, html) {
 					if (games[lobbyCode].seats[playerNum]) amtChosen++;
 				}
 				if (games[lobbyCode].joinedPlayers.length < minPlayers) {
-					soscket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want het minimum aantal deelnemers is nog niet bereikt."})
+					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want het minimum aantal deelnemers is nog niet bereikt."})
 				} else if (amtChosen != games[lobbyCode].joinedPlayers.length) {
 					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want nog niet iedereen heeft een kleur gekozen."});
 				} else {
@@ -126,30 +137,20 @@ fs.readFile("client/index.html", function(err, html) {
 			let loser = {};
 			let guessedDiceAmount = game.diceCounts[lastTurn.type] + jokersCount;
 			if (lastTurn.amount > (guessedDiceAmount)) { // guess was incorrect -> dudo was correct
-				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
-					loser: lastTurn.playerName,
-					dice: game.dice,
-					inflicter: playerName,
-					inflicted: lastTurn.playerName,
-					nameColors: game.nameColors,
-					ownerName: game.lobbyOwner,
-					lastTurn: lastTurn,
-					guessedDiceAmount: guessedDiceAmount
-				});
 				loser = {playerNum: game.nameColors[lastTurn.playerName], playerName: lastTurn.playerName}
 			} else { // guess was correct -> dudo was incorrect
-				io.sockets.in(lobbyCode).emit("sc-dudo-round-end", {
-					loser: playerName,
-					dice: game.dice,
-					inflicter: playerName,
-					inflicted: lastTurn.playerName,
-					nameColors: game.nameColors,
-					ownerName: game.lobbyOwner,
-					lastTurn: lastTurn,
-					guessedDiceAmount: game.diceCounts[lastTurn.type] + jokersCount
-				});
 				loser = {playerNum: game.nameColors[playerName], playerName: playerName}
 			}
+			io.sockets.in(lobbyCode).emit("sc-round-end", {
+				loser: loser.playerName,
+				dice: game.dice,
+				inflicter: playerName,
+				inflicted: lastTurn.playerName,
+				nameColors: game.nameColors,
+				ownerName: game.lobbyOwner,
+				lastTurn: lastTurn,
+				guessedDiceAmount: guessedDiceAmount
+			});
 			game.participants[loser.playerNum].dice -= 1;
 			game.playersTurn = {playerNum: loser.playerNum, playerName: loser.playerName}
 			if (game.participants[loser.playerNum].dice == 0) {
@@ -176,7 +177,7 @@ fs.readFile("client/index.html", function(err, html) {
 			// if (!jokersCount) jokersCount = 0;
 			let guessedDiceAmount = game.diceCounts[lastTurn.type] + jokersCount;
 			if (lastTurn.amount == (guessedDiceAmount)) { // calza is correct
-				io.sockets.in(lobbyCode).emit("sc-calza-round-end", {
+				io.sockets.in(lobbyCode).emit("sc-round-end", {
 					winner: playerName,
 					dice: game.dice,
 					inflicter: playerName,
@@ -184,14 +185,14 @@ fs.readFile("client/index.html", function(err, html) {
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
 					lastTurn: lastTurn,
-					guessedDiceAmount: guessedDiceAmount
+					guessedDiceAmount: guessedDiceAmount,
 				});
 				const winner = {playerNum: game.nameColors[playerName], playerName: playerName}
-				if (game.participants[winner.playerNum].dice != amountDice) game.participants[winner.playerNum].dice += 1;
+				if (game.participants[winner.playerNum].dice != maxDice) game.participants[winner.playerNum].dice += 1;
 				game.playersTurn = {playerNum: winner.playerNum, playerName: winner.playerName}
 				game.pacifico = false;
 			} else { // calza is incorrect
-				io.sockets.in(lobbyCode).emit("sc-calza-round-end", {
+				io.sockets.in(lobbyCode).emit("sc-round-end", {
 					loser: playerName,
 					dice: game.dice,
 					inflicter: playerName,
@@ -245,7 +246,7 @@ function loopGame(lobbyCode) {
 		game.pacifico = false;
 		for (const playerNum in game.seats) {
 			if (game.seats[playerNum]) {
-				game.participants[playerNum] = {playerName: game.seats[playerNum], dice: amountDice, beenPacifico: false};
+				game.participants[playerNum] = {playerName: game.seats[playerNum], dice: maxDice, beenPacifico: false};
 				game.nameColors[game.seats[playerNum]] = playerNum;
 			}
 		}
@@ -286,6 +287,7 @@ function endGame(lobbyCode) {
 	const winner = {playerNum: Object.keys(game.participants)[0], playerName: Object.values(game.participants)[0].playerName};
 	console.log(`Game ends with winner ${winner.playerName}`)
 	io.sockets.in(lobbyCode).emit("sc-game-end", {lobbyCode: lobbyCode, winner: winner, winnerDice: Object.values(game.participants)[0].dice})
+	delete games[lobbyCode];
 }
 
 //#region general functions
