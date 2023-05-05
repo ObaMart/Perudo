@@ -305,13 +305,15 @@ socket.on("sc-round-end", data => {
 		cardName.innerHTML = name;
 		cardDice = document.createElement("div");
 		cardDice.classList.add("card-dice");
-		if (winner && name == winner && dice[winner].length != maxDice) diceList.push("P")
+		if (winner && name == winner && dice[winner].length != maxDice) diceList.push("P");
+		let i = 1;
 		for (const die of diceList) {
 			cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/${die}.png`;
 			cardDie.classList.add("dice", "reveal-dice");
-			if (loser && die == last(diceList)) cardDie.classList.add("dissolved");
+			if (loser && name == loser && i == diceList.length) cardDie.classList.add("dissolved");
 			cardDice.appendChild(cardDie);
+			i++;
 		}
 		card.appendChild(cardName);
 		card.appendChild(cardDice);
