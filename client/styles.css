@@ -369,3 +369,7 @@ input[type=number] {
     opacity: 0.35;
     transition: opacity 3s ease-in-out;
 }
+
+.pacifico-label {
+    color: hsl(0, 100%, 80%);
+}

@@ -2,8 +2,6 @@ const socket = io();
 
 /** TODO:
  * Page verification on every socket.on
- * fix pacifico gamerules (no type change except for brokeboys)
- * add pacifico "notification" on game screen
  * add preselection on amount of dice in bid phase & a +1 button
  * warning when bidding high amount of dice
  * fix "seats" stuff
@@ -11,10 +9,12 @@ const socket = io();
  * Rulebook (html/css)
  */
 const maxDice = 5;
-const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"]
+const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"];
+const nextRoundDelay = 1000; //ms
 
 const urlParams = new URLSearchParams(window.location.search);
-const page = window.location.pathname
+const page = window.location.pathname;
+
 
 //#region home functions
 function home_JoinWithCode() {
@@ -22,6 +22,10 @@ function home_JoinWithCode() {
 	const playerName = document.getElementById("player-name-input").value;
 	if (playerName == "") {
 		alert("Je moet een naam invullen.");
+	} else if (!isAlphaNumeric(playerName)) {
+		alert("Je naam mag alleen letters en cijfers bevatten.");
+	} else if (code.length != 4) {
+		alert("Je moet een 4-letterige code invullen.")
 	} else {
 		window.location = `/lobby.html?code=${code}&b=${brightnessSliderValue}&playername=${playerName}`;
 	}
@@ -31,6 +35,8 @@ function home_CreateLobby() {
 	const playerName = document.getElementById("player-name-input").value;
 	if (playerName == "") {
 		alert("Je moet een naam invullen.");
+	} else if (!isAlphaNumeric(playerName)) {
+		alert("Je naam mag alleen letters en cijfers bevatten.");
 	} else {
 		window.location = `/lobby.html?code=newlobby&b=${brightnessSliderValue}&playername=${playerName}`;
 	}
@@ -100,8 +106,7 @@ if (page == "/lobby.html") {
 	lobbyCode = urlParams.get("code")
 	const clientName = urlParams.get("playername")
 	if (lobbyCode == "newlobby") {
-		alphanum = Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-		lobbyCode = randomChoice(alphanum) + randomChoice(alphanum) + randomChoice(alphanum) + randomChoice(alphanum);
+		lobbyCode = Array.from({length: 4}, () => randomChoice(Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))).join("");
 		socket.emit("cs-lobby-create", {lobbyCode: lobbyCode, playerName: clientName});
 	} else {
 		document.getElementById("start-game-button").style.display = "none";
@@ -116,7 +121,7 @@ socket.on("sc-lobby-player-update", data => {
 			document.getElementById(`player${colorNum}-name`).innerHTML = playerName;
 			document.getElementById(`player${colorNum}`).style.cursor = "auto";
 		} else {
-			document.getElementById(`player${colorNum}-name`).innerHTML = "Beschikbaar, klik om te kiezen!";
+			document.getElementById(`player${colorNum}-name`).innerHTML = "Deze kleur is beschikbaar, klik om te kiezen!";
 			document.getElementById(`player${colorNum}`).style.cursor = "pointer";
 		}
 		if (playerName == clientName) selected = true;
@@ -141,6 +146,9 @@ function lobby_StartGame() {
 //#endregion lobby
 
 //#region in-game
+
+let roundData = {}
+
 socket.on("sc-game-init", data => {
 	const {lobbyCode} = data;
 	const clientName = urlParams.get("playername");
@@ -152,22 +160,18 @@ if (page == "/game.html") {
 	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
 }
 
-let lastTurnGlobal;
-
 function game_Dudo() {
 	const lobbyCode = urlParams.get("code");
 	const clientName = urlParams.get("playername");
-	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: lastTurnGlobal});
+	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: roundData.lastTurn});
 }
 
 function game_Calza() {
 	const lobbyCode = urlParams.get("code");
 	const clientName = urlParams.get("playername");
-	socket.emit("cs-game-calza", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: lastTurnGlobal});
+	socket.emit("cs-game-calza", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: roundData.lastTurn});
 }
 
-let lastDiceType = 0;
-let lastBidAmount = 0;
 function game_Bid() {
 	const lobbyCode = urlParams.get("code");
 	const clientName = urlParams.get("playername");
@@ -178,32 +182,49 @@ function game_Bid() {
 	} else if (chosenBidAmount > 10) {
 		if (!confirm(`Weet je zeker dat je ${chosenBidAmount} dobbelstenen wilt bieden?`)) return;
 	}
-	if (
+	if ( // restructure this (1*)
 		(
-			(chosenDiceType > lastDiceType && chosenBidAmount >= lastBidAmount) // verhoog soort dobbelstenen
-			|| (chosenDiceType >= lastDiceType && chosenBidAmount > lastBidAmount && lastDiceType != 12) // verhoog aantal dobbelstenen
-			|| (chosenBidAmount > lastBidAmount * 2 && lastDiceType == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
-			|| (chosenBidAmount > Math.floor(lastBidAmount / 2) && lastDiceType != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
-			|| (chosenDiceType == 12 && lastDiceType == 12 && chosenBidAmount > lastBidAmount)
+			(chosenDiceType > roundData.lastTurn.type && chosenBidAmount >= roundData.lastTurn.amount) // verhoog soort dobbelstenen
+			|| (chosenDiceType >= roundData.lastTurn.type && chosenBidAmount > roundData.lastTurn.amount && roundData.lastTurn.type != 12) // verhoog aantal dobbelstenen
+			|| (chosenBidAmount > roundData.lastTurn.amount * 2 && roundData.lastTurn.type == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
+			|| (chosenBidAmount > Math.floor(roundData.lastTurn.amount / 2) && roundData.lastTurn.type != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
+			|| (chosenDiceType == 12 && roundData.lastTurn.type == 12 && chosenBidAmount > roundData.lastTurn.amount)
 		)
 		&& (chosenBidAmount > 0 && chosenDiceType > 0)
 	) {
 		// valid
+		if (roundData.lastTurn.playerName && roundData.pacifico && chosenDiceType != roundData.lastTurn.type && roundData.clientDice && roundData.clientDice.length != 1) {
+			alert("Jouw bod is ongeldig. Omdat dit een pacifico-ronde (armoederonde) is, moet je dezelfde dobbelsteen kiezen als de vorige persoon, tenzij je maar één dobbelsteen in bezit hebt.");
+			return;
+		} else {
+			console.log(roundData.lastTurn.playerName)
+			console.log(roundData.pacifico)
+			console.log(chosenDiceType != roundData.lastTurn.type)
+			console.log(roundData.clientDice)
+		}
 		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}});
 	} else {
 		alert("Jouw bod is ongeldig. Probeer het opnieuw met een ander bod.");
+		return;
 	}
 }
 
 socket.on("sc-new-turn", data => {
 	const {lobbyCode, playersTurn, lastTurn, pacifico, dice} = data;
 	document.getElementById("players-dice-container").innerHTML = "";
-	lastTurnGlobal = lastTurn;
+	roundData.lastTurn = lastTurn;
+	roundData.pacifico = pacifico;
+	if (pacifico) {
+		document.querySelectorAll(".pacifico-label").forEach(el => el.innerHTML = " (Let op: dit is een pacifico-ronde)");
+	} else {
+		document.querySelectorAll(".pacifico-label").forEach(el => el.innerHTML = "");
+	}
 	const clientName = urlParams.get("playername");
 	let clientDice;
 	if (dice) {
 		if (clientName in dice) {
 			clientDice = dice[clientName];
+			roundData.clientDice = dice[clientName];
 		} else {
 			for (let i = 0; i < maxDice; i++) {
 				document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
@@ -212,6 +233,7 @@ socket.on("sc-new-turn", data => {
 			document.getElementById("your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
 		}
 	}
+	console.log(roundData.clientDice);
 	chosenDiceType = 0;
 	document.querySelector(".main").classList.remove(...allColors);
 	document.querySelector(".main").classList.add(`clr${playersTurn.playerNum}`);
@@ -233,12 +255,9 @@ socket.on("sc-new-turn", data => {
 	}
 	if (!lastTurn) {
 		document.querySelectorAll(".last-turn").forEach(el => {el.style.display = "none"});
-		lastDiceType = 0;
-		lastBidAmount = 0;
+		roundData.lastTurn = {type: 0, amount: 0, playerName: null}
 	} else {
 		document.querySelectorAll(".last-turn").forEach(el => {el.style.display = "inline"});
-		lastDiceType = lastTurn.type;
-		lastBidAmount = lastTurn.amount;
 		document.querySelectorAll("[last-player-name]").forEach(el => el.innerHTML = lastTurn.playerName);
 		document.querySelectorAll("[last-player-bid-amount]").forEach(el => el.innerHTML = lastTurn.amount);
 		document.querySelectorAll("[last-player-bid-type]").forEach(el => el.src = `icons/dice/${lastTurn.type}.png`);
@@ -250,7 +269,7 @@ socket.on("sc-new-turn", data => {
 		}
 		document.getElementById("bid-amount-input").value = "";
 		showGamePage("your-turn")
-		if (lastTurn) game_Select(lastTurn.type);
+		if (lastTurn && lastTurn.playerName) game_Select(lastTurn.type);
 		document.getElementById("bid").innerHTML = lastTurn ? "Verhogen" : "Bieden";
 		document.getElementById("game-buttons-container").style.display = lastTurn ? "flex" : "none";
 	} else {
@@ -328,7 +347,7 @@ socket.on("sc-round-end", data => {
 		(async () => {
 			await setTimeout(async () => {
 				document.getElementById("next-round-button").style.display = "inline";
-			}, 10000);
+			}, nextRoundDelay);
 		})();
 	}
 });
@@ -380,7 +399,7 @@ socket.on("sc-game-end", data => {
 	(async () => {
 		await setTimeout(async () => {
 			window.location = `/winner.html?code=${lobbyCode}&b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
-		}, 10000);
+		}, nextRoundDelay);
 	})();
 	
 })
@@ -400,4 +419,18 @@ if (page == "/winner.html") {
 function randomChoice(arr) {
 	return arr[Math.floor(Math.random()*arr.length)];
 }
+
+function isAlphaNumeric(str) {
+	var code, i, len;
+  
+	for (i = 0, len = str.length; i < len; i++) {
+	  code = str.charCodeAt(i);
+	  if (!(code > 47 && code < 58) && // numeric (0-9)
+		  !(code > 64 && code < 91) && // upper alpha (A-Z)
+		  !(code > 96 && code < 123)) { // lower alpha (a-z)
+		return false;
+	  }
+	}
+	return true;
+  };
 //#endregion general functions
