@@ -7,10 +7,12 @@ const server = http.Server(app);
 const io = require('socket.io')(server);
 // const server = http.Server(app);
 const PORT = 3000;
+
 let games = {};
 const minPlayers = 2;
 const maxPlayers = 8;
 const maxDice = 5;
+
 /** TODO:
  * Rulesets (pacifico rules, amount of dice, etc.)
  * add log function + useful logs
@@ -28,31 +30,37 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.emit("sc-test", "Connected to server");
 
 		//#region home
-		socket.on("cs-disconnect", data => {
-			const {lobbyCode, playerName} = data;
+		socket.on("cs-disconnect", ({lobbyCode, playerName}) => {
 			if (!(lobbyCode in games)) return;
-			if (playerName == games[lobbyCode].lobbyOwner) {
+			const game = games[lobbyCode];
+			
+			if (playerName == game.lobbyOwner) {
 				io.sockets.in(lobbyCode).emit("sc-error-fatal", {lobbyCode: lobbyCode, errorMessage: `Het spel is afgelopen omdat lobby-eigenaar ${playerName} het spel heeft verlaten.`});
 				delete games[lobbyCode];
 				return;
 			}
-			games[lobbyCode].joinedPlayers.splice(games[lobbyCode].joinedPlayers.indexOf(playerName), 1);
-			for (let i = 1; i <= maxPlayers; i++) {
-				if (games[lobbyCode].seats && games[lobbyCode].seats[i] == playerName) {
-					games[lobbyCode].seats[i] = null;
-					break;
-				} else if (games[lobbyCode].participants[i].playerName == playerName) {
-					delete games[lobbyCode].participants[i];
-					delete games[lobbyCode].dice[playerName];
+			if (game.seats) {
+				game.joinedPlayers.splice(game.joinedPlayers.indexOf(playerName), 1);
+				for (const i in game.seats) {
+					if (game.seats[i] == playerName) {
+						game.seats[i] = null;
+						break;
+					}
+				}
+				if (game.seats) io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
+			} else if (game.participants) {
+				for (const i in game.participants) {
+					if (game.participants[i].playerName == playerName) {
+						delete game.participants[i];
+						delete game.dice[playerName];
+					}
 				}
 			}
-			if (games[lobbyCode].seats) io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
 		})
 		//#endregion home
 
 		//#region lobby
-		socket.on("cs-lobby-create", data => {
-			const {lobbyCode, playerName} = data;
+		socket.on("cs-lobby-create", ({lobbyCode, playerName}) => {
 			if (lobbyCode in games) {
 				socket.emit("sc-error-fatal", {lobbyCode: lobbyCode});
 				return;
@@ -60,13 +68,14 @@ fs.readFile("client/index.html", function(err, html) {
 			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null}, joinedPlayers: [playerName], lobbyOwner: playerName}
 			socket.join(lobbyCode);
 		});
-		socket.on("cs-lobby-color-choice", data => {
-			const {playerName, color, lobbyCode} = data;
-			if (!games[lobbyCode].seats[color]) games[lobbyCode].seats[color] = playerName;
-			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
+		socket.on("cs-lobby-color-choice", ({playerName, color, lobbyCode}) => {
+			if (!(lobbyCode in games)) return;
+			const game = games[lobbyCode];
+
+			if (!game.seats[color]) game.seats[color] = playerName;
+			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
 		});
-		socket.on("cs-lobby-join", data => {
-			const {lobbyCode, playerName} = data;
+		socket.on("cs-lobby-join", ({lobbyCode, playerName}) => {
 			if (!(lobbyCode in games)) {
 				socket.emit("sc-error-fatal", {playerName: playerName, errorMessage: `Deze lobbycode (${lobbyCode}) is ongeldig. Probeer het opnieuw.`});
 				return;
@@ -77,62 +86,82 @@ fs.readFile("client/index.html", function(err, html) {
 				socket.emit("sc-error-fatal", {playerName: playerName, errorMessage: `Deze lobby (${lobbyCode}) zit vol. (${maxPlayers} spelers)`});
 				return;
 			}
-			games[lobbyCode].joinedPlayers.push(playerName);
+			const game = games[lobbyCode];
+
+			game.joinedPlayers.push(playerName);
 			socket.join(lobbyCode);
-			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", games[lobbyCode].seats);
+			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
 		});
-		socket.on("cs-lobby-start", data => {
-			const {playerName, lobbyCode} = data;
-			if (playerName == games[lobbyCode].lobbyOwner) {
+		socket.on("cs-lobby-start", ({playerName, lobbyCode}) => {
+			if (!(lobbyCode in games)) return;
+			const game = games[lobbyCode];
+
+			if (playerName == game.lobbyOwner) {
 				let amtChosen = 0;
-				for (const playerNum in games[lobbyCode].seats) {
-					if (games[lobbyCode].seats[playerNum]) amtChosen++;
+				for (const playerNum in game.seats) {
+					if (game.seats[playerNum]) amtChosen++;
 				}
-				if (games[lobbyCode].joinedPlayers.length < minPlayers) {
-					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want het minimum aantal deelnemers is nog niet bereikt."})
-				} else if (amtChosen != games[lobbyCode].joinedPlayers.length) {
+				if (game.joinedPlayers.length < minPlayers) {
+					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want het minimum aantal deelnemers is nog niet bereikt."});
+				} else if (amtChosen != game.joinedPlayers.length) {
 					socket.emit("sc-error", {lobbyCode: lobbyCode, errorMessage: "Het spel kan niet gestart worden, want nog niet iedereen heeft een kleur gekozen."});
 				} else {
 					io.sockets.in(lobbyCode).emit("sc-game-init", {lobbyCode: lobbyCode});
-					games[lobbyCode].alivePlayers = [];
+					game.readyPlayers = [];
 				}
 			}
 		});
 		//#endregion lobby
 
 		//#region game
-		socket.on("cs-game-ready", data => {
-			const {playerName, lobbyCode} = data;
-			if (!(lobbyCode in games)) return;
-			socket.join(lobbyCode);
-			games[lobbyCode].alivePlayers.push(playerName);
-			if (games[lobbyCode].alivePlayers.length == games[lobbyCode].joinedPlayers.length) {
-				io.sockets.in(lobbyCode).emit("sc-game-start", {lobbyCode: lobbyCode});
-				loopGame(lobbyCode);
-			}
-		});
-		
-		socket.on("cs-game-bid", data => {
-			const {lobbyCode, playerName, bid} = data;
+		socket.on("cs-game-ready", ({playerName, lobbyCode}) => {
 			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
-			if (!(game.playersTurn.playerName == playerName)) return;
-			const nextPlayersTurn = {playerNum: next(lobbyCode, game.playersTurn.playerNum), playerName: game.participants[next(lobbyCode, game.playersTurn.playerNum)].playerName}
+
+			socket.join(lobbyCode);
+			game.readyPlayers.push(playerName);
+			if (game.readyPlayers.length != game.joinedPlayers.length) return;
+
+			io.sockets.in(lobbyCode).emit("sc-game-start", {lobbyCode: lobbyCode});
+			console.log(`Game ${lobbyCode} is starting...`);
+			game.participants = {};
+			game.nameColors = {};
+			game.pacifico = false;
+			for (const playerNum in game.seats) {
+				if (game.seats[playerNum]) {
+					game.participants[playerNum] = {playerName: game.seats[playerNum], dice: maxDice, beenPacifico: false};
+					game.nameColors[game.seats[playerNum]] = playerNum;
+				}
+			}
+			delete game.seats;
+			delete game.readyPlayers;
+			delete game.joinedPlayers;
+			const startingPlayer = randomChoice(Object.keys(game.participants));
+			game.playersTurn = {playerNum: startingPlayer, playerName: game.participants[startingPlayer].playerName}
+			newRound(lobbyCode, game.playersTurn, false);
+		});
+		
+		socket.on("cs-game-bid", ({lobbyCode, playerName, bid}) => {
+			if (!(lobbyCode in games)) return;
+			const game = games[lobbyCode];
+
+			if (playerName != game.playersTurn.playerName) return;
+			const nextNum = next(lobbyCode, game.playersTurn.playerNum)
+			const nextPlayersTurn = {playerNum: nextNum, playerName: game.participants[nextNum].playerName}
 			io.sockets.in(lobbyCode).emit("sc-new-turn", {
 				lobbyCode: lobbyCode,
 				playersTurn: nextPlayersTurn,
-				lastTurn: {...bid, playerName: playerName},
+				lastTurn: {type: bid.type, amount: bid.amount, playerName: playerName},
 				pacifico: game.pacifico
-				// lastPlayerName: playerName,
 			});
 			game.playersTurn = nextPlayersTurn;
 		});
 
-		socket.on("cs-game-dudo", data => {
-			const {lobbyCode, playerName, lastTurn} = data;
+		socket.on("cs-game-dudo", ({lobbyCode, playerName, lastTurn}) => {
+			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
+
 			let jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
-			// if (!jokersCount) jokersCount = 0;
 			let loser = {};
 			let guessedDiceAmount = game.diceCounts[lastTurn.type] + jokersCount;
 			if (lastTurn.amount > (guessedDiceAmount)) { // guess was incorrect -> dudo was correct
@@ -169,11 +198,11 @@ fs.readFile("client/index.html", function(err, html) {
 			}
 		});
 
-		socket.on("cs-game-calza", data => {
-			const {lobbyCode, playerName, lastTurn} = data;
+		socket.on("cs-game-calza", ({lobbyCode, playerName, lastTurn}) => {
+			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
+
 			let jokersCount = (game.pacifico || lastTurn.type == 12) ? 0 : game.diceCounts[12];
-			// if (!jokersCount) jokersCount = 0;
 			let guessedDiceAmount = game.diceCounts[lastTurn.type] + jokersCount;
 			if (lastTurn.amount == (guessedDiceAmount)) { // calza is correct
 				io.sockets.in(lobbyCode).emit("sc-round-end", {
@@ -223,38 +252,19 @@ fs.readFile("client/index.html", function(err, html) {
 			
 		});
 
-		socket.on("cs-next-round", data => {
-			const {playerName, lobbyCode} = data;
-			if (playerName != games[lobbyCode].lobbyOwner) return;
-			newRound(lobbyCode, games[lobbyCode].playersTurn, games[lobbyCode].pacifico)
-		})
+		socket.on("cs-next-round", ({playerName, lobbyCode}) => {
+			if (!(lobbyCode in games)) return;
+			const game = games[lobbyCode];
+
+			if (playerName != game.lobbyOwner) return;
+			newRound(lobbyCode, game.playersTurn, game.pacifico)
+		});
 		//#endregion game
 	});
 
 	server.listen(PORT);
 	console.log('Server started.');
 });
-
-function loopGame(lobbyCode) {
-	console.log(`Looping game ${lobbyCode} in 1 second...`);
-	setTimeout(() => {
-		console.log(`looping game ${lobbyCode}!`);
-		const game = games[lobbyCode];
-		game.participants = {};
-		game.nameColors = {};
-		game.pacifico = false;
-		for (const playerNum in game.seats) {
-			if (game.seats[playerNum]) {
-				game.participants[playerNum] = {playerName: game.seats[playerNum], dice: maxDice, beenPacifico: false};
-				game.nameColors[game.seats[playerNum]] = playerNum;
-			}
-		}
-		delete game.seats;
-		const startingPlayer = randomChoice(Object.keys(game.participants));
-		game.playersTurn = {playerNum: startingPlayer, playerName: game.participants[startingPlayer].playerName}
-		newRound(lobbyCode, game.playersTurn, false);
-	}, 1000);
-}
 
 function newRound(lobbyCode, startingPlayer, pacifico) {
 	// const game = games[lobbyCode] 

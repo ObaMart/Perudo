@@ -12,6 +12,8 @@ const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"];
 const nextRoundDelay = 1000; //ms
 
 const urlParams = new URLSearchParams(window.location.search);
+const clientName = urlParams.get("playername");
+let lobbyCode = urlParams.get("code");
 const page = window.location.pathname;
 
 
@@ -43,8 +45,6 @@ function home_CreateLobby() {
 
 function home() { // return to home
 	if (confirm("Weet je zeker dat je terug naar het homescherm wil?")) {
-		const clientName = urlParams.get("playername");
-		const lobbyCode = urlParams.get("code");
 		socket.emit("cs-disconnect", {playerName: clientName, lobbyCode: lobbyCode})
 		window.location = "/";
 	}
@@ -100,10 +100,7 @@ socket.on("sc-error", data => {
 
 //#region lobby
 let selected = false;
-let lobbyCode = ""
 if (page == "/lobby.html") {
-	lobbyCode = urlParams.get("code")
-	const clientName = urlParams.get("playername")
 	if (lobbyCode == "newlobby") {
 		lobbyCode = Array.from({length: 4}, () => randomChoice(Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))).join("");
 		socket.emit("cs-lobby-create", {lobbyCode: lobbyCode, playerName: clientName});
@@ -115,7 +112,6 @@ if (page == "/lobby.html") {
 	document.getElementById("lobby-code").innerHTML = lobbyCode
 }
 socket.on("sc-lobby-player-update", data => {
-	const clientName = urlParams.get("playername");
 	Object.entries(data).forEach(([colorNum, playerName]) => {
 		if (playerName) {
 			document.getElementById(`player${colorNum}-name`).innerHTML = playerName;
@@ -139,7 +135,6 @@ function lobby_ChooseColor(colorNum) {
 
 function lobby_StartGame() {
 	if (confirm("Wil je het spel starten?")) {
-		const clientName = urlParams.get("playername");
 		socket.emit("cs-lobby-start", {playerName: clientName, lobbyCode: lobbyCode});
 	}
 }
@@ -166,30 +161,21 @@ let roundData = {}
 
 socket.on("sc-game-init", data => {
 	const {lobbyCode} = data;
-	const clientName = urlParams.get("playername");
 	window.location = `/game.html?code=${lobbyCode}&b=${brightnessSliderValue}&playername=${clientName}`;
 });
 if (page == "/game.html") {
-	lobbyCode = urlParams.get("code");
-	const clientName = urlParams.get("playername");
 	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
 }
 
 function game_Dudo() {
-	const lobbyCode = urlParams.get("code");
-	const clientName = urlParams.get("playername");
 	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: roundData.lastTurn});
 }
 
 function game_Calza() {
-	const lobbyCode = urlParams.get("code");
-	const clientName = urlParams.get("playername");
 	socket.emit("cs-game-calza", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: roundData.lastTurn});
 }
 
 function game_Bid() {
-	const lobbyCode = urlParams.get("code");
-	const clientName = urlParams.get("playername");
 	const chosenBidAmount = parseInt(document.getElementById("bid-amount-input").value);
 	if (chosenBidAmount > 40) {
 		alert("Je kan niet meer dan 40 dobbelstenen bieden, want er kunnen maximaal 40 dobbelstenen in het spel zitten.");
@@ -211,11 +197,6 @@ function game_Bid() {
 		if (roundData.lastTurn.playerName && roundData.pacifico && chosenDiceType != roundData.lastTurn.type && roundData.clientDice && roundData.clientDice.length != 1) {
 			alert("Jouw bod is ongeldig. Omdat dit een pacifico-ronde (armoederonde) is, moet je dezelfde dobbelsteen kiezen als de vorige persoon, tenzij je maar één dobbelsteen in bezit hebt.");
 			return;
-		} else {
-			console.log(roundData.lastTurn.playerName)
-			console.log(roundData.pacifico)
-			console.log(chosenDiceType != roundData.lastTurn.type)
-			console.log(roundData.clientDice)
 		}
 		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}});
 	} else {
@@ -234,7 +215,6 @@ socket.on("sc-new-turn", data => {
 	} else {
 		document.querySelectorAll(".pacifico-label").forEach(el => el.innerHTML = "");
 	}
-	const clientName = urlParams.get("playername");
 	let clientDice;
 	if (dice) {
 		if (clientName in dice) {
@@ -248,7 +228,6 @@ socket.on("sc-new-turn", data => {
 			document.getElementById("your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
 		}
 	}
-	console.log(roundData.clientDice);
 	chosenDiceType = 0;
 	document.querySelector(".main").classList.remove(...allColors);
 	document.querySelector(".main").classList.add(`clr${playersTurn.playerNum}`);
@@ -296,7 +275,6 @@ socket.on("sc-new-turn", data => {
 
 socket.on("sc-round-end", data => {
 	const {inflicter, inflicted, dice, nameColors, ownerName, lastTurn, guessedDiceAmount, winner, loser} = data;
-	const clientName = urlParams.get("playername");
 	showGamePage("reveal-round");
 	document.getElementById("next-round-button").style.display = "none";
 	document.querySelector(".main").classList.remove(...allColors);
@@ -314,19 +292,20 @@ socket.on("sc-round-end", data => {
 			`${loser} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
 	}
 	const container = document.getElementById("players-dice-container");
+	let diceList, card, cardName, cardDice, cardDie
 	for (const name in dice) {
-		const diceList = dice[name];
-		const card = document.createElement("div");
+		diceList = dice[name];
+		card = document.createElement("div");
 		card.classList.add("player-card", "standard-shadow");
 		card.style.backgroundColor = `var(--clr-${nameColors[name]});`;
-		const cardName = document.createElement("p");
+		cardName = document.createElement("p");
 		cardName.classList.add("player-name", "standard-shadow");
 		cardName.innerHTML = name;
-		const cardDice = document.createElement("div");
+		cardDice = document.createElement("div");
 		cardDice.classList.add("card-dice");
 		let i = 0;
 		for (const die of diceList) {
-			const cardDie = document.createElement("img");
+			cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/${die}.png`;
 			cardDie.classList.add("dice", "reveal-dice");
 			cardDie.id = `die${name}${i}`
@@ -334,7 +313,7 @@ socket.on("sc-round-end", data => {
 			i++;
 		}
 		if (winner && name == winner && dice[winner].length != maxDice) {
-			const cardDie = document.createElement("img");
+			cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/X.png`;
 			cardDie.classList.add("dice", "reveal-dice", "dissolve");
 			cardDie.id = `die${name}${i}`
@@ -350,7 +329,7 @@ socket.on("sc-round-end", data => {
 					document.getElementById(`die${name}${i-1}`).classList.add("dissolve");
 				}, 2000);
 			})();
-		} else if (winner &&name == winner && dice[winner].length != maxDice) {
+		} else if (winner && name == winner && dice[winner].length != maxDice) {
 			(async () => {
 				await setTimeout(async () => {
 					document.getElementById(`die${name}${i-1}`).classList.remove("dissolve");
@@ -387,6 +366,7 @@ function showGamePage(page) {
 		default:
 			break;
 	}
+	return;
 }
 
 let chosenDiceType = 0;
@@ -400,8 +380,6 @@ function game_Select(diceNumber) {
 
 function game_NextRound() {
 	if (confirm("Weet je zeker dat je de volgende ronde wil starten?")) {
-		const clientName = urlParams.get("playername");
-		const lobbyCode = urlParams.get("code");
 		socket.emit("cs-next-round", {playerName: clientName, lobbyCode: lobbyCode});
 	}
 }
@@ -410,10 +388,10 @@ function game_NextRound() {
 
 //#region end screen
 socket.on("sc-game-end", data => {
-	const {lobbyCode, winner, winnerDice} = data;
+	const {winner, winnerDice} = data;
 	(async () => {
 		await setTimeout(async () => {
-			window.location = `/winner.html?code=${lobbyCode}&b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
+			window.location = `/winner.html?b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
 		}, nextRoundDelay);
 	})();
 	
