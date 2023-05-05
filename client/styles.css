@@ -146,6 +146,15 @@
     align-items: center;
 }
 
+.reveal-players {
+    display: flex;
+    flex-flow: row wrap;
+    height: 60vh;
+    width: 80vw;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
 .player-card {
     width: 40%;
     height: 20%;
@@ -403,7 +412,7 @@ input[type=number] {
 
 .dissolve {
     opacity: 0.35;
-    transition: opacity 3s ease-in-out;
+    transition: opacity 1s 2s ease-in-out;
 }
 
 .pacifico-label {

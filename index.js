@@ -117,6 +117,7 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.on("cs-game-ready", ({playerName, lobbyCode}) => {
 			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
+			if (!('readyPlayers' in game)) return;
 
 			socket.join(lobbyCode);
 			game.readyPlayers.push(playerName);
@@ -177,7 +178,8 @@ fs.readFile("client/index.html", function(err, html) {
 				nameColors: game.nameColors,
 				ownerName: game.lobbyOwner,
 				lastTurn: lastTurn,
-				guessedDiceAmount: guessedDiceAmount
+				guessedDiceAmount: guessedDiceAmount,
+				type: "dudo"
 			});
 			game.participants[loser.playerNum].dice -= 1;
 			game.playersTurn = {playerNum: loser.playerNum, playerName: loser.playerName}
@@ -214,6 +216,7 @@ fs.readFile("client/index.html", function(err, html) {
 					ownerName: game.lobbyOwner,
 					lastTurn: lastTurn,
 					guessedDiceAmount: guessedDiceAmount,
+					type: "calza"
 				});
 				const winner = {playerNum: game.nameColors[playerName], playerName: playerName}
 				if (game.participants[winner.playerNum].dice != maxDice) game.participants[winner.playerNum].dice += 1;
@@ -228,7 +231,8 @@ fs.readFile("client/index.html", function(err, html) {
 					nameColors: game.nameColors,
 					ownerName: game.lobbyOwner,
 					lastTurn: lastTurn,
-					guessedDiceAmount: guessedDiceAmount
+					guessedDiceAmount: guessedDiceAmount,
+					type: "calza"
 				});
 				const loser = {playerNum: game.nameColors[playerName], playerName: playerName}
 				game.participants[loser.playerNum].dice -= 1;
@@ -294,8 +298,8 @@ function newRound(lobbyCode, startingPlayer, pacifico) {
 function endGame(lobbyCode) {
 	const game = games[lobbyCode];
 	const winner = {playerNum: Object.keys(game.participants)[0], playerName: Object.values(game.participants)[0].playerName};
-	console.log(`Game ends with winner ${winner.playerName}`)
-	io.sockets.in(lobbyCode).emit("sc-game-end", {lobbyCode: lobbyCode, winner: winner, winnerDice: Object.values(game.participants)[0].dice})
+	console.log(`Game ends with winner ${winner.playerName}`);
+	io.sockets.in(lobbyCode).emit("sc-game-end", {lobbyCode: lobbyCode, winner: winner, winnerDice: Object.values(game.participants)[0].dice});
 	delete games[lobbyCode];
 }
 

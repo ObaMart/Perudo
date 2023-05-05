@@ -10,6 +10,7 @@ const socket = io();
 const maxDice = 5;
 const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"];
 const nextRoundDelay = 1000; //ms
+const gameEndDelay = 20000;
 
 const urlParams = new URLSearchParams(window.location.search);
 const clientName = urlParams.get("playername");
@@ -274,11 +275,12 @@ socket.on("sc-new-turn", data => {
 });
 
 socket.on("sc-round-end", data => {
-	const {inflicter, inflicted, dice, nameColors, ownerName, lastTurn, guessedDiceAmount, winner, loser} = data;
+	const {inflicter, inflicted, dice, nameColors, ownerName, lastTurn, guessedDiceAmount, winner, loser, type} = data;
 	showGamePage("reveal-round");
 	document.getElementById("next-round-button").style.display = "none";
 	document.querySelector(".main").classList.remove(...allColors);
-	document.getElementById("inflicter-action").innerHTML = `${inflicter} betwijfelt de gok van ${inflicted}`;
+	if (type == "dudo") document.getElementById("inflicter-action").innerHTML = `${inflicter} betwijfelt de gok van ${inflicted}`;
+	else document.getElementById("inflicter-action").innerHTML = `${inflicter} denkt dat de gok van ${inflicted} exact klopt`;
 	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
 	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
 	if (winner && dice[winner].length != maxDice) {
@@ -303,39 +305,17 @@ socket.on("sc-round-end", data => {
 		cardName.innerHTML = name;
 		cardDice = document.createElement("div");
 		cardDice.classList.add("card-dice");
-		let i = 0;
+		if (winner && name == winner && dice[winner].length != maxDice) diceList.push("P")
 		for (const die of diceList) {
 			cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/${die}.png`;
 			cardDie.classList.add("dice", "reveal-dice");
-			cardDie.id = `die${name}${i}`
+			if (loser && die == last(diceList)) cardDie.classList.add("dissolved");
 			cardDice.appendChild(cardDie);
-			i++;
-		}
-		if (winner && name == winner && dice[winner].length != maxDice) {
-			cardDie = document.createElement("img");
-			cardDie.src = `icons/dice/X.png`;
-			cardDie.classList.add("dice", "reveal-dice", "dissolve");
-			cardDie.id = `die${name}${i}`
-			cardDice.appendChild(cardDie);
-			i++;
 		}
 		card.appendChild(cardName);
 		card.appendChild(cardDice);
 		container.append(card);
-		if (loser && name == loser) {
-			(async () => {
-				await setTimeout(async () => {
-					document.getElementById(`die${name}${i-1}`).classList.add("dissolve");
-				}, 2000);
-			})();
-		} else if (winner && name == winner && dice[winner].length != maxDice) {
-			(async () => {
-				await setTimeout(async () => {
-					document.getElementById(`die${name}${i-1}`).classList.remove("dissolve");
-				}, 2000);
-			})();
-		}
 	}
 	if (clientName == ownerName) {
 		(async () => {
@@ -392,7 +372,7 @@ socket.on("sc-game-end", data => {
 	(async () => {
 		await setTimeout(async () => {
 			window.location = `/winner.html?b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
-		}, nextRoundDelay);
+		}, gameEndDelay);
 	})();
 	
 })
@@ -417,13 +397,17 @@ function isAlphaNumeric(str) {
 	var code, i, len;
   
 	for (i = 0, len = str.length; i < len; i++) {
-	  code = str.charCodeAt(i);
-	  if (!(code > 47 && code < 58) && // numeric (0-9)
-		  !(code > 64 && code < 91) && // upper alpha (A-Z)
-		  !(code > 96 && code < 123)) { // lower alpha (a-z)
+		code = str.charCodeAt(i);
+		if (!(code > 47 && code < 58) && // numeric (0-9)
+			!(code > 64 && code < 91) && // upper alpha (A-Z)
+			!(code > 96 && code < 123)) { // lower alpha (a-z)
 		return false;
-	  }
+		}
 	}
 	return true;
-  };
+}
+
+function last(array) {
+    return array[array.length - 1];
+}
 //#endregion general functions
