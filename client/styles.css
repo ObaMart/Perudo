@@ -1,13 +1,14 @@
 :root {
     /* color palette: */
-    --clr-1: hsl(204, 100%, 70%); /* light blue */
-    --clr-2: hsl(155, 100%, 70%); /* green */
-    --clr-3: hsl(62, 100%, 70%); /* yellow */
-    --clr-4: hsl(32, 100%, 70%); /* orange */
-    --clr-5: hsl(0, 100%, 70%); /* red */
-    --clr-6: hsl(322, 100%, 70%); /* pink */
-    --clr-7: hsl(284, 100%, 70%); /* purple */
-    --clr-8: hsl(239, 100%, 70%); /* dark blue */
+    --clr-0: hsla(0, 100%, 100%, 0);
+    --clr-1: hsla(204, 100%, 70%, 1); /* light blue */
+    --clr-2: hsla(155, 100%, 70%, 1); /* green */
+    --clr-3: hsla(62, 100%, 70%, 1); /* yellow */
+    --clr-4: hsla(32, 100%, 70%, 1); /* orange */
+    --clr-5: hsla(0, 100%, 70%, 1); /* red */
+    --clr-6: hsla(322, 100%, 70%, 1); /* pink */
+    --clr-7: hsla(284, 100%, 70%, 1); /* purple */
+    --clr-8: hsla(239, 100%, 70%, 1); /* dark blue */
     overflow: hidden;
 }
 
@@ -34,9 +35,9 @@
 
 .main {
     animation: bg-color-animation 30s linear infinite;
-    min-height: 100vh;
+    height: 100vh;
     z-index: 0;
-    min-width: 100vw;
+    width: 100vw;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -74,9 +75,21 @@
     background-color: var(--clr-8) !important;
 }
 
-.main-brightness-overlay {
+.main-color-overlay {
     position: absolute;
     z-index: 1;
+    height: 100vh;
+    width: 100vw;
+    transition: all 1s ease-in-out;
+    -webkit-transition: all 1s ease-in-out;
+    -moz-transition: all 1s ease-in-out;
+    -ms-transition: all 1s ease-in-out;
+    -o-transition: all 1s ease-in-out;
+}
+
+.main-brightness-overlay {
+    position: absolute;
+    z-index: 2;
     height: 100vh;
     width: 100vw;
 }
@@ -149,7 +162,6 @@
 .reveal-players {
     display: flex;
     flex-flow: row wrap;
-    /* height: 60vh; */
     width: 80vw;
     justify-content: space-evenly;
     align-items: center;
@@ -225,7 +237,7 @@ input {
 #player-name-input {
     height: 7vh;
     font-size: 5vh;
-    width: 50vh;
+    width: 30vw;
     border-radius: 20px;
     margin-bottom: 3vh;
 }
@@ -418,14 +430,341 @@ input[type=number] {
 
 .pacifico-label {
     color: hsl(0, 100%, 80%);
+    /* text-decoration: underline; */
 }
 
-.flex-row {
-    display: flex;
-    flex-flow: row nowrap;
-}
-
-.flex-column {
-    display: flex;
-    flex-flow: column nowrap;
+@media (max-aspect-ratio: 1) { /* Phone responsiveness*/
+    .home-container {
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
+        align-items: center;
+        height: 100%
+    }
+    
+    .home-buttons-container {
+        display: flex;
+        flex-flow: row nowrap;
+        width: 90vw;
+        justify-content: space-evenly;
+    }
+    
+    .input-buttons-container {
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+    
+    .header-container {
+        display: flex;
+        flex-flow: row nowrap;
+    }
+    
+    .header-container > div {
+        min-width: 10vw;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .main-title {
+        color: white;
+        font-size: 10vh;
+        margin-bottom: 2vh;
+        text-align: center;
+    }
+    
+    .sub-title {
+        color: white;
+        font-size: 6vh;
+        text-align: center;
+        margin-bottom: 2vh;
+    }
+    
+    .mini-title {
+        color: white;
+        font-size: 4vh;
+        text-align: center;
+        margin-bottom: 5vh;
+    }
+    
+    .players {
+        display: flex;
+        flex-flow: row wrap;
+        height: 60vh;
+        width: 80vw;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+    
+    .reveal-players {
+        display: flex;
+        flex-flow: row wrap;
+        width: 80vw;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+    
+    .player-card {
+        width: 40%;
+        height: 12vh;
+        margin-bottom: 3vh;
+        border: 3px solid white;
+        border-radius: 30px;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    dialog {
+        border: 3px solid white;
+        animation: bg-color-animation 30s linear infinite;
+        border-radius: 30px;
+        width: 50%;
+        height: 50%;
+        margin: auto;
+    }
+    
+    dialog > div {
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    
+    dialog > div > button {
+        width: 40%;
+    }
+    
+    .player-name {
+        color: white;
+        font-size: 3vh;
+    }
+    
+    .main-button {
+        background-color: transparent;
+        color: white;
+        border-color: white;
+        border-style: solid;
+        border-radius: 2vw;
+        width: 20vw;
+        height: 10vh;
+        padding: 2vh;
+        font-size: 3vh;
+        margin-bottom: 2vh;
+        cursor: pointer;
+    }
+    
+    input {
+        background-color: transparent;
+        border: 1px solid white;
+        border-radius: 5px;
+        color: white;
+        text-align: center;
+    }
+    
+    #join-code-input {
+        height: 3vh;
+        font-size: 3vh;
+        width: 10vh;
+        text-transform: uppercase;
+    }
+    
+    #player-name-input {
+        height: 7vh;
+        font-size: 5vh;
+        width: 90vw;
+        border-radius: 20px;
+        margin-bottom: 3vh;
+    }
+    
+    .back-to-home {
+        z-index: 200;
+        position: absolute;
+        top: 1vh;
+        left: 1vh;
+        width: 5vw;
+        height: 5vh;
+        border: 3px solid white;
+        font-size: 1vh;
+        border-radius: 1vh;
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: white;
+        cursor: pointer;
+    }
+    
+    img#brightness-icon {
+        z-index: 200;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 5vw;
+        height: 5vw;
+        filter: invert(100%) drop-shadow(2px 2px 5px #555);
+    }
+    
+    img#settings-icon {
+        z-index: 200;
+        width: 5vw;
+        height: 5vw;
+        filter: invert(100%) drop-shadow(2px 2px 5px #555);
+    }
+    
+    img.dice {
+        filter: invert(100%) drop-shadow(2px 2px 5px #555);
+    }
+    
+    #brightness-slider {
+        position: absolute;
+        top: 6vw;
+        right: 1vw;
+        -webkit-appearance: none;  /* Override default CSS styles */
+        appearance: none;
+        width: 20vw; /* Full-width */
+        height: 1vh; /* Specified height */
+        background: white; /* Grey background */
+        outline: none; /* Remove outline */
+        border-radius: 0.5vh;
+        transition: opacity 0.3s;
+    }
+    
+    #brightness-slider::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Override default look */
+        appearance: none;
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        border-radius: 50%;
+        background: white; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+        filter: drop-shadow(2px 2px 5px #555);
+    }
+    
+    #brightness-slider::-moz-range-thumb {
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        border-radius: 50%;
+        background: white; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+        filter: drop-shadow(2px 2px 5px #555);
+    }
+    
+    .standard-shadow {
+        filter: drop-shadow(2px 2px 5px #555);
+    }
+    
+    .cursorpointer {
+        cursor: pointer;
+    }
+    
+    #your-turn, #others-turn, #reveal-round {
+        flex-flow: column nowrap;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .last-turn {
+        font-size: 3vh;
+        color: white;
+        line-height: 3vh;
+        margin-bottom: 2vh;
+    }
+    
+    .standard-text {
+        font-size: 3vh;
+        color: white;
+        line-height: 3vh;
+        margin-bottom: 2vh;
+    }
+    
+    .rolled-dice-list {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8vh;
+        width: 30vw;
+    }
+    
+    .small-dice {
+        height: 3vh;
+        margin: 0 0 -0.4vh 0;
+        display: inline;
+        white-space: nowrap;
+    }
+    
+    .reveal-dice {
+        height: 5vh;
+        white-space: nowrap;
+    }
+    
+    .game-buttons-container {
+        display: flex;
+        flex-flow: row nowrap;
+        width: 50vw;
+        justify-content: space-evenly;
+        margin-bottom: 4vh;
+    }
+    
+    .bid-options-container {
+        display: flex;
+        flex-flow: row nowrap;
+        width: 50vw;
+        justify-content: space-evenly;
+        margin-bottom: 2vh;
+    }
+    
+    #bid-amount-input {
+        height: 8vh;
+        width: 10vh;
+        font-size: 8vh;
+    }
+    
+    .medium-dice {
+        height: 8vh;
+        margin: 0 0 -0.4vh 0;
+        display: inline;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    
+    .rolled-dice {
+        margin: 0 1.5vw;
+    }
+    
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    
+    .unchosen {
+        opacity: 0.5;
+    }
+    
+    .card-dice {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-evenly;
+        width: 90%;
+        margin-top: 2vh;
+    }
+    
+    .dissolved {
+        opacity: 0.35;
+        transition: opacity 1s 2s ease-in-out;
+    }
 }

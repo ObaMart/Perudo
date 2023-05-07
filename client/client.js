@@ -6,17 +6,46 @@ const socket = io();
  * switch from document.getElementById to document.querySelector
  * Rulebook (html/css)
  * ***responsiveness***
+ * *****get jsdoc types working properly*****
  */
+
+/**
+ * Enclosing type for players
+ * @typedef {object} Player
+ * @property {string} playerName (unique) name of player
+ * @property {(number|string|null)} playerNum color number / identifier for player
+ */
+
+/**
+ * Enclosing type for bids
+ * @typedef {object} Bid
+ * @property {number} amount amount of dice player bids
+ * @property {2 | 3 | 4 | 5 | 6 | 12} type type of dice player bids ([])
+ */
+
+/**
+ * Enclosing type for turns
+ * @typedef {object} Turn
+ * @property {Player} player player object of turn
+ * @property {Bid} bid bid object of turn
+ */
+
 const maxDice = 5;
 const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"];
 const nextRoundDelay = 1000; //ms
 const gameEndDelay = 20000;
 
-const urlParams = new URLSearchParams(window.location.search);
-const clientName = urlParams.get("playername");
-let lobbyCode = urlParams.get("code");
+// const urlParams = new URLSearchParams(window.location.search);
+const clientName = sessionStorage.getItem("clientName");
+const clientNum = sessionStorage.getItem("clientNum");
+const client = {playerName: clientName, playerNum: clientNum};
+
+let lobbyCode = sessionStorage.getItem("lobbyCode");
 const page = window.location.pathname;
 
+let playerNames = sessionStorage.getItem("playerNames");
+if (playerNames) playerNames = JSON.parse(playerNames);
+else playerNames = {};
 
 //#region home functions
 function home_JoinWithCode() {
@@ -29,7 +58,10 @@ function home_JoinWithCode() {
 	} else if (code.length != 4) {
 		alert("Je moet een 4-letterige code invullen.")
 	} else {
-		window.location = `/lobby.html?code=${code}&b=${brightnessSliderValue}&playername=${playerName}`;
+		sessionStorage.setItem("clientName", playerName);
+		sessionStorage.setItem("lobbyCode", code);
+		sessionStorage.setItem("brightness", brightnessSliderValue);
+		window.location = "/lobby.html";
 	}
 }
 
@@ -40,28 +72,32 @@ function home_CreateLobby() {
 	} else if (!isAlphaNumeric(playerName)) {
 		alert("Je naam mag alleen letters en cijfers bevatten.");
 	} else {
-		window.location = `/lobby.html?code=newlobby&b=${brightnessSliderValue}&playername=${playerName}`;
+		sessionStorage.setItem("clientName", playerName);
+		sessionStorage.setItem("lobbyCode", "newlobby");
+		sessionStorage.setItem("brightness", brightnessSliderValue);
+		window.location = "/lobby.html";
 	}
 }
 
 function home() { // return to home
 	if (confirm("Weet je zeker dat je terug naar het homescherm wil?")) {
-		socket.emit("cs-disconnect", {playerName: clientName, lobbyCode: lobbyCode})
+		socket.emit("cs-disconnect", {player: client, lobbyCode: lobbyCode})
+		sessionStorage.clear();
 		window.location = "/";
 	}
 }
 //#endregion home functions
 
 //#region brightness
-var brightnessSliderValue = 0.9
+let brightnessSliderValue = 0.9
 const brightnessSlider = document.getElementById("brightness-slider");
-const urlParamsBrightness = urlParams.get("b")
-if (urlParamsBrightness) {
-	brightnessSliderValue = parseFloat(urlParamsBrightness)
+const b = sessionStorage.getItem("brightness");
+if (b) {
+	brightnessSliderValue = parseFloat(b);
 }
 document.getElementById("dynamic-brightness-overlay").style.backgroundColor = `hsla(0, 0%, 0%, ${0.7 * (1 - brightnessSliderValue)})`
 brightnessSlider.value = brightnessSliderValue;
-var brightnessSliderVisible = false;
+let brightnessSliderVisible = false;
 function toggleBrightnessSlider() {
     if (brightnessSliderVisible) {
         brightnessSlider.style.opacity = 0;
@@ -80,17 +116,18 @@ brightnessSlider.oninput = function() {
 
 //#region errors
 socket.on("sc-error-fatal", data => {
-	const {playerName, errorMessage} = data;
+	const {errorMessage} = data;
 	if (errorMessage) {
 		alert(errorMessage);
 	} else {
 		// default error message
 		alert("Er is een probleem opgetreden. Je wordt teruggestuurd naar de homepagina.");
 	}
+	sessionStorage.clear();
 	window.location = "/"
 });
 socket.on("sc-error", data => {
-	const {playerName, errorMessage} = data;
+	const {errorMessage} = data;
 	if (errorMessage) {
 		alert(errorMessage);
 	} else {
@@ -104,6 +141,7 @@ let selected = false;
 if (page == "/lobby.html") {
 	if (lobbyCode == "newlobby") {
 		lobbyCode = Array.from({length: 4}, () => randomChoice(Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))).join("");
+		sessionStorage.setItem("lobbyCode", lobbyCode);
 		socket.emit("cs-lobby-create", {lobbyCode: lobbyCode, playerName: clientName});
 	} else {
 		document.getElementById("start-game-button").style.display = "none";
@@ -117,11 +155,16 @@ socket.on("sc-lobby-player-update", data => {
 		if (playerName) {
 			document.getElementById(`player${colorNum}-name`).innerHTML = playerName;
 			document.getElementById(`player${colorNum}`).style.cursor = "auto";
+			playerNames[colorNum] = playerName;
 		} else {
 			document.getElementById(`player${colorNum}-name`).innerHTML = "Deze kleur is beschikbaar, klik om te kiezen!";
 			document.getElementById(`player${colorNum}`).style.cursor = "pointer";
 		}
-		if (playerName == clientName) selected = true;
+		if (playerName == clientName) {
+			selected = true;
+			client.playerNum = colorNum;
+			sessionStorage.setItem("clientNum", colorNum);
+		}
 	});
 });
 
@@ -130,7 +173,7 @@ function lobby_ChooseColor(colorNum) {
 		alert("Je hebt al een kleur gekozen.")
 		return
 	}
-	const playerName = urlParams.get("playername");
+	const playerName = sessionStorage.getItem("clientName");
 	socket.emit("cs-lobby-color-choice", {playerName: playerName, color: colorNum, lobbyCode: lobbyCode});
 }
 
@@ -161,19 +204,29 @@ function lobby_SaveSettings() {
 let roundData = {}
 
 socket.on("sc-game-init", data => {
-	const {lobbyCode} = data;
-	window.location = `/game.html?code=${lobbyCode}&b=${brightnessSliderValue}&playername=${clientName}`;
+	// const {lobbyCode} = data;
+	sessionStorage.setItem("playerNames", JSON.stringify(playerNames));
+	window.location = "/game.html";
 });
 if (page == "/game.html") {
-	socket.emit("cs-game-ready", {playerName: clientName, lobbyCode: lobbyCode});
+	socket.emit("cs-game-ready", {player: client, lobbyCode: lobbyCode});
 }
 
+// socket.on("sc-player-info", players => {
+// 	for (const player of players) {
+// 		if (player.playerName == client.playerName) {
+// 			client.playerNum = player.playerNum;
+// 			break;
+// 		}
+// 	}
+// });
+
 function game_Dudo() {
-	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: roundData.lastTurn});
+	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, player: client, lastTurn: roundData.lastTurn});
 }
 
 function game_Calza() {
-	socket.emit("cs-game-calza", {lobbyCode: lobbyCode, playerName: clientName, lastTurn: roundData.lastTurn});
+	socket.emit("cs-game-calza", {lobbyCode: lobbyCode, player: client, lastTurn: roundData.lastTurn});
 }
 
 function game_Bid() {
@@ -184,22 +237,22 @@ function game_Bid() {
 	} else if (chosenBidAmount > 10) {
 		if (!confirm(`Weet je zeker dat je ${chosenBidAmount} dobbelstenen wilt bieden?`)) return;
 	}
-	if ( // restructure this (1*)
+	if ( // restructure this
 		(
-			(chosenDiceType > roundData.lastTurn.type && chosenBidAmount >= roundData.lastTurn.amount) // verhoog soort dobbelstenen
-			|| (chosenDiceType >= roundData.lastTurn.type && chosenBidAmount > roundData.lastTurn.amount && roundData.lastTurn.type != 12) // verhoog aantal dobbelstenen
-			|| (chosenBidAmount > roundData.lastTurn.amount * 2 && roundData.lastTurn.type == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
-			|| (chosenBidAmount > Math.floor(roundData.lastTurn.amount / 2) && roundData.lastTurn.type != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
-			|| (chosenDiceType == 12 && roundData.lastTurn.type == 12 && chosenBidAmount > roundData.lastTurn.amount)
+			(chosenDiceType > roundData.lastTurn.bid.type && chosenBidAmount >= roundData.lastTurn.bid.amount) // verhoog soort dobbelstenen
+			|| (chosenDiceType >= roundData.lastTurn.bid.type && chosenBidAmount > roundData.lastTurn.bid.amount && roundData.lastTurn.bid.type != 12) // verhoog aantal dobbelstenen
+			|| (chosenBidAmount > roundData.lastTurn.bid.amount * 2 && roundData.lastTurn.bid.type == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
+			|| (chosenBidAmount > Math.floor(roundData.lastTurn.bid.amount / 2) && roundData.lastTurn.bid.type != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
+			|| (chosenDiceType == 12 && roundData.lastTurn.bid.type == 12 && chosenBidAmount > roundData.lastTurn.bid.amount)
 		)
 		&& (chosenBidAmount > 0 && chosenDiceType > 0)
 	) {
 		// valid
-		if (roundData.lastTurn.playerName && roundData.pacifico && chosenDiceType != roundData.lastTurn.type && roundData.clientDice && roundData.clientDice.length != 1) {
+		if (roundData.lastTurn.player.playerName && roundData.pacifico && chosenDiceType != roundData.lastTurn.bid.type && roundData.clientDice && roundData.clientDice.length != 1) {
 			alert("Jouw bod is ongeldig. Omdat dit een pacifico-ronde (armoederonde) is, moet je dezelfde dobbelsteen kiezen als de vorige persoon, tenzij je maar één dobbelsteen in bezit hebt.");
 			return;
 		}
-		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, playerName: clientName, bid: {amount: chosenBidAmount, type: chosenDiceType}});
+		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, player: client, bid: {amount: chosenBidAmount, type: chosenDiceType}});
 	} else {
 		alert("Jouw bod is ongeldig. Probeer het opnieuw met een ander bod.");
 		return;
@@ -218,9 +271,9 @@ socket.on("sc-new-turn", data => {
 	}
 	let clientDice;
 	if (dice) {
-		if (clientName in dice) {
-			clientDice = dice[clientName];
-			roundData.clientDice = dice[clientName];
+		if (client.playerNum in dice) {
+			clientDice = dice[client.playerNum];
+			roundData.clientDice = clientDice;
 		} else {
 			for (let i = 0; i < maxDice; i++) {
 				document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
@@ -230,9 +283,7 @@ socket.on("sc-new-turn", data => {
 		}
 	}
 	chosenDiceType = 0;
-	document.querySelector(".main").classList.remove(...allColors);
-	document.querySelector(".main").classList.add(`clr${playersTurn.playerNum}`);
-	// document.querySelector(".main").style.backgroundColor = `var(--clr-${playersTurn.playerNum}) !important`;
+	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${playersTurn.playerNum})`;
 	if (clientDice) {
 		for (let i = 0; i < maxDice; i++) {
 			const die = document.getElementById(`rolled-dice${i+1}-yt`);
@@ -250,68 +301,71 @@ socket.on("sc-new-turn", data => {
 	}
 	if (!lastTurn) {
 		document.querySelectorAll(".last-turn").forEach(el => {el.style.display = "none"});
-		roundData.lastTurn = {type: 0, amount: 0, playerName: null}
+		roundData.lastTurn = {bid: {type: 0, amount: 0}, player: {playerName: null, playerNum: null}}
 	} else {
 		document.querySelectorAll(".last-turn").forEach(el => {el.style.display = "inline"});
-		document.querySelectorAll("[last-player-name]").forEach(el => el.innerHTML = lastTurn.playerName);
-		document.querySelectorAll("[last-player-bid-amount]").forEach(el => el.innerHTML = lastTurn.amount);
-		document.querySelectorAll("[last-player-bid-type]").forEach(el => el.src = `icons/dice/${lastTurn.type}.png`);
+		document.querySelectorAll("[last-player-name]").forEach(el => el.innerHTML = lastTurn.player.playerName);
+		document.querySelectorAll("[last-player-bid-amount]").forEach(el => el.innerHTML = lastTurn.bid.amount);
+		document.querySelectorAll("[last-player-bid-type]").forEach(el => el.src = `icons/dice/${lastTurn.bid.type}.png`);
 	}
-	if (playersTurn.playerName == clientName) {
+	if (playersTurn.playerName == client.playerName) {
 		// Your turn
 		for (const x of [2, 3, 4, 5, 6, 12]) {
 			document.getElementById(`dice${x}`).classList.add("unchosen");
 		}
 		document.getElementById("bid-amount-input").value = "";
-		showGamePage("your-turn")
-		if (lastTurn && lastTurn.playerName) game_Select(lastTurn.type);
+		showGamePage("your-turn");
+		if (lastTurn && lastTurn.player.playerName) game_Select(lastTurn.bid.type);
 		document.getElementById("bid").innerHTML = lastTurn ? "Verhogen" : "Bieden";
 		document.getElementById("game-buttons-container").style.display = lastTurn ? "flex" : "none";
 	} else {
 		// Others turn
-		showGamePage("others-turn")
+		showGamePage("others-turn");
 		document.querySelector("[current-player]").innerHTML = playersTurn.playerName;
 	}
 });
 
 socket.on("sc-round-end", data => {
-	const {inflicter, inflicted, dice, nameColors, ownerName, lastTurn, guessedDiceAmount, winner, loser, type} = data;
+	const {inflicter, lastTurn, dice, ownerName, guessedDiceAmount, winner, loser, type} = data;
+	const inflicted = lastTurn.player
 	showGamePage("reveal-round");
 	document.getElementById("next-round-button").style.display = "none";
-	document.querySelector(".main").classList.remove(...allColors);
-	if (type == "dudo") document.getElementById("inflicter-action").innerHTML = `${inflicter} betwijfelt de gok van ${inflicted}`;
-	else document.getElementById("inflicter-action").innerHTML = `${inflicter} denkt dat de gok van ${inflicted} exact klopt`;
-	document.getElementById("guess-amount").innerHTML = lastTurn.amount;
-	document.getElementById("guess-type").src = `icons/dice/${lastTurn.type}.png`;
-	if (winner && dice[winner].length != maxDice) {
+	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-0)`;
+	if (type == "dudo") document.getElementById("inflicter-action").innerHTML = `${inflicter.playerName} betwijfelt de gok van ${inflicted.playerName}`;
+	else document.getElementById("inflicter-action").innerHTML = `${inflicter.playerName} denkt dat de gok van ${inflicted.playerName} exact klopt`;
+	document.getElementById("guess-amount").innerHTML = lastTurn.bid.amount;
+	document.getElementById("guess-type").src = `icons/dice/${lastTurn.bid.type}.png`;
+	// v
+	if (winner && dice[winner.playerNum].length != maxDice) {
 		document.getElementById("winner-loser-action").innerHTML = 
-			`${winner} krijgt een dobbelsteen erbij, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
+			`${winner.playerName} krijgt een dobbelsteen erbij, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.bid.type}.png" class="dice small-dice"> in het spel`;
 	} else if (winner) {
 		document.getElementById("winner-loser-action").innerHTML = 
-			`${winner} krijgt niks, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel, maar ${winner} heeft al ${maxDice} dobbelstenen`;
+			`${winner.playerName} krijgt niks, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.bid.type}.png" class="dice small-dice"> in het spel, maar ${winner.playerName} heeft al ${maxDice} dobbelstenen`;
 	} else {
 		document.getElementById("winner-loser-action").innerHTML = 
-			`${loser} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.type}.png" class="dice small-dice"> in het spel`;
+			`${loser.playerName} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.bid.type}.png" class="dice small-dice"> in het spel`;
 	}
+	// ^ move this stuff to index.js (send string instead of game.dice) (unnecessary client-side logic)
 	const container = document.getElementById("players-dice-container");
 	let diceList, card, cardName, cardDice, cardDie
-	for (const name in dice) {
-		diceList = dice[name];
+	for (const playerNum in dice) {
+		diceList = dice[playerNum];
 		card = document.createElement("div");
 		card.classList.add("player-card", "standard-shadow");
-		card.style.backgroundColor = `var(--clr-${nameColors[name]});`;
+		card.style.backgroundColor = `var(--clr-${playerNum});`;
 		cardName = document.createElement("p");
 		cardName.classList.add("player-name", "standard-shadow");
-		cardName.innerHTML = name;
+		cardName.innerHTML = playerNames[playerNum]; // FIND SOLUTION FOR THIS, nameColors DOESN'T EXIST, SHOW playerName INSTEAD OF playerNum // MAYBE USE sc-player-info
 		cardDice = document.createElement("div");
 		cardDice.classList.add("card-dice");
-		if (winner && name == winner && dice[winner].length != maxDice) diceList.push("P");
+		if (winner && winner.playerNum == playerNum && diceList.length != maxDice) diceList.push("P");
 		let i = 1;
 		for (const die of diceList) {
 			cardDie = document.createElement("img");
 			cardDie.src = `icons/dice/${die}.png`;
 			cardDie.classList.add("dice", "reveal-dice");
-			if (loser && name == loser && i == diceList.length) cardDie.classList.add("dissolved");
+			if (loser && loser.playerNum == playerNum && i == diceList.length) cardDie.classList.add("dissolved");
 			cardDice.appendChild(cardDie);
 			i++;
 		}
@@ -319,7 +373,7 @@ socket.on("sc-round-end", data => {
 		card.appendChild(cardDice);
 		container.append(card);
 	}
-	if (clientName == ownerName) {
+	if (client.playerName == ownerName) {
 		(async () => {
 			await setTimeout(async () => {
 				document.getElementById("next-round-button").style.display = "inline";
@@ -362,7 +416,7 @@ function game_Select(diceNumber) {
 
 function game_NextRound() {
 	if (confirm("Weet je zeker dat je de volgende ronde wil starten?")) {
-		socket.emit("cs-next-round", {playerName: clientName, lobbyCode: lobbyCode});
+		socket.emit("cs-next-round", {player: client, lobbyCode: lobbyCode});
 	}
 }
 
@@ -370,21 +424,24 @@ function game_NextRound() {
 
 //#region end screen
 socket.on("sc-game-end", data => {
-	const {winner, winnerDice} = data;
+	const {winner} = data;
+	document.querySelector("#next-round-button").remove();
 	(async () => {
 		await setTimeout(async () => {
-			window.location = `/winner.html?b=${brightnessSliderValue}&winnerName=${winner.playerName}&color=${winner.playerNum}&winnerDice=${winnerDice}`;
+			sessionStorage.setItem("winnerName", winner.player.playerName);
+			sessionStorage.setItem("winnerColor", winner.player.playerNum);
+			sessionStorage.setItem("winnerDice", winner.dice);
+			window.location = "/winner.html";
 		}, gameEndDelay);
 	})();
 	
 })
 
 if (page == "/winner.html") {
-	const winnerName = urlParams.get("winnerName");
-	const backgroundColor = urlParams.get("color");
-	const winnerDice = urlParams.get("winnerDice");
-	document.querySelector(".main").classList.remove(...allColors);
-	document.querySelector(".main").classList.add(`clr${backgroundColor}`);
+	const winnerName = sessionStorage.getItem("winnerName");
+	const backgroundColor = sessionStorage.getItem("winnerColor");
+	const winnerDice = sessionStorage.getItem("winnerDice");
+	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${backgroundColor})`;
 	document.getElementById("winner-name").innerHTML = winnerName;
 	document.getElementById("winner-dice").innerHTML = winnerDice;
 }
@@ -411,5 +468,9 @@ function isAlphaNumeric(str) {
 
 function last(array) {
     return array[array.length - 1];
+}
+
+function flip(obj) {
+	return Object.fromEntries(Object.entries(obj).map(([k, v]) => [v, k]));
 }
 //#endregion general functions
