@@ -39,13 +39,17 @@
                     <button id="calza" class="main-button standard-shadow" onclick="game_Calza()">Het klopt exact</button>
                 </div>
                 <div class="bid-options-container">
-                    <input type="number" id="bid-amount-input">
-                    <img id="dice2" src="icons/dice/2.png" alt="Choose dice 2" class="dice medium-dice unchosen" onclick="game_Select(2)">
-                    <img id="dice3" src="icons/dice/3.png" alt="Choose dice 3" class="dice medium-dice unchosen" onclick="game_Select(3)">
-                    <img id="dice4" src="icons/dice/4.png" alt="Choose dice 4" class="dice medium-dice unchosen" onclick="game_Select(4)">
-                    <img id="dice5" src="icons/dice/5.png" alt="Choose dice 5" class="dice medium-dice unchosen" onclick="game_Select(5)">
-                    <img id="dice6" src="icons/dice/6.png" alt="Choose dice 6" class="dice medium-dice unchosen" onclick="game_Select(6)">
-                    <img id="dice12" src="icons/dice/12.png" alt="Choose dice Ace" class="dice medium-dice unchosen" onclick="game_Select(12)">
+                    <div>
+                        <input type="number" id="bid-amount-input" placeholder="0">
+                    </div>
+                    <div>
+                        <img id="dice2" src="icons/dice/2.png" alt="Choose dice 2" class="dice medium-dice unchosen" onclick="game_Select(2)">
+                        <img id="dice3" src="icons/dice/3.png" alt="Choose dice 3" class="dice medium-dice unchosen" onclick="game_Select(3)">
+                        <img id="dice4" src="icons/dice/4.png" alt="Choose dice 4" class="dice medium-dice unchosen" onclick="game_Select(4)">
+                        <img id="dice5" src="icons/dice/5.png" alt="Choose dice 5" class="dice medium-dice unchosen" onclick="game_Select(5)">
+                        <img id="dice6" src="icons/dice/6.png" alt="Choose dice 6" class="dice medium-dice unchosen" onclick="game_Select(6)">
+                        <img id="dice12" src="icons/dice/12.png" alt="Choose dice Ace" class="dice medium-dice unchosen" onclick="game_Select(12)">    
+                    </div>
                 </div>
                 <button id="bid" class="main-button standard-shadow" onclick="game_Bid()">Verhogen</button>
             </div>
@@ -67,7 +71,7 @@
             </div>
 
             <div id="reveal-round" style="display: none">
-                <h3 class="mini-title standard-shadow" style="margin-top: -2vh;"><span id="inflicter-action">SpelerX (neemt de gok van SpelerY in twijfel)/(denkt dat de gok van SpelerY exact klopt)</span> (<span id="guess-amount">X</span> keer <img src="icons/dice/X.png" id="guess-type" alt="dice" class="dice small-dice">)</h3>
+                <h3 class="mini-title standard-shadow responsive-text" style="margin-top: -2vh;"><span id="inflicter-action">SpelerX betwijfelt de gok van SpelerY</span> (<span id="guess-amount">X</span> keer <img src="icons/dice/X.png" id="guess-type" alt="dice" class="dice small-dice">)</h3>
                 <p class="standard-text standard-shadow" style="margin-top: -3vh;">Resultaat van afgelopen ronde:</p>
                 <div id="players-dice-container" class="reveal-players">
 

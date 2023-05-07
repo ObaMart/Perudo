@@ -109,6 +109,23 @@
     justify-content: space-evenly;
 }
 
+.main-button {
+    background-color: transparent;
+    color: white;
+    border-color: white;
+    border-style: solid;
+    border-radius: 2vw;
+    width: 20vw;
+    height: 10vh;
+    padding: 2vh;
+    font-size: 3vh;
+    margin-bottom: 2vh;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .input-buttons-container {
     display: flex;
     flex-flow: column nowrap;
@@ -119,14 +136,9 @@
 .header-container {
     display: flex;
     flex-flow: row nowrap;
-}
-
-.header-container > div {
-    min-width: 10vw;
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    width: 80vw;
 }
 
 .main-title {
@@ -143,6 +155,14 @@
     margin-bottom: 2vh;
 }
 
+.header-container > div {
+    min-width: 10vw;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
 .mini-title {
     color: white;
     font-size: 4vh;
@@ -157,6 +177,7 @@
     width: 80vw;
     justify-content: space-evenly;
     align-items: center;
+    margin-bottom: 3vh;
 }
 
 .reveal-players {
@@ -165,12 +186,12 @@
     width: 80vw;
     justify-content: space-evenly;
     align-items: center;
+    margin-bottom: 4vh;
 }
 
 .player-card {
     width: 40%;
     height: 12vh;
-    margin-bottom: 3vh;
     border: 3px solid white;
     border-radius: 30px;
     display: flex;
@@ -192,7 +213,7 @@ dialog > div {
     display: flex;
     flex-flow: column nowrap;
     align-items: center;
-    justify-content: center;
+    justify-content: space-evenly;
     height: 100%;
 }
 
@@ -205,20 +226,6 @@ dialog > div > button {
     font-size: 3vh;
 }
 
-.main-button {
-    background-color: transparent;
-    color: white;
-    border-color: white;
-    border-style: solid;
-    border-radius: 2vw;
-    width: 20vw;
-    height: 10vh;
-    padding: 2vh;
-    font-size: 3vh;
-    margin-bottom: 2vh;
-    cursor: pointer;
-}
-
 input {
     background-color: transparent;
     border: 1px solid white;
@@ -227,11 +234,33 @@ input {
     text-align: center;
 }
 
+#join-code-dialog > div > div:not(#join-code-div) {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 90%;
+}
+
+#join-code-div {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.code-text {
+    color: white;
+    font-size: 6vh;
+    text-align: center;
+}
+
 #join-code-input {
-    height: 3vh;
-    font-size: 3vh;
-    width: 10vh;
+    height: 9vh;
+    font-size: 9vh;
+    width: 30vh;
     text-transform: uppercase;
+    margin-left: 3vh;
 }
 
 #player-name-input {
@@ -342,6 +371,7 @@ img.dice {
     color: white;
     line-height: 3vh;
     margin-bottom: 2vh;
+    text-align: center;
 }
 
 .rolled-dice-list {
@@ -379,6 +409,13 @@ img.dice {
     width: 50vw;
     justify-content: space-evenly;
     margin-bottom: 2vh;
+}
+
+.bid-options-container > div:last-child {
+    width: 90%;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
 }
 
 #bid-amount-input {
@@ -448,17 +485,14 @@ input[type=number] {
         width: 90vw;
         justify-content: space-evenly;
     }
-    
-    .input-buttons-container {
-        display: flex;
-        flex-flow: column nowrap;
-        justify-content: space-evenly;
-        align-items: center;
-    }
-    
-    .header-container {
-        display: flex;
-        flex-flow: row nowrap;
+
+    .main-button {
+        border-radius: 20px;
+        width: 40vw;
+        height: 10vh;
+        padding: 2vh;
+        font-size: 3vh;
+        margin-bottom: 2vh;
     }
     
     .header-container > div {
@@ -468,49 +502,41 @@ input[type=number] {
         justify-content: center;
         align-items: center;
     }
-    
-    .main-title {
-        color: white;
-        font-size: 10vh;
-        margin-bottom: 2vh;
-        text-align: center;
+
+    .main-title, .sub-title, .mini-title {
+        margin-bottom: 1vh;
     }
-    
-    .sub-title {
-        color: white;
+
+    .header-container > .header > .main-title {
         font-size: 6vh;
-        text-align: center;
-        margin-bottom: 2vh;
     }
-    
-    .mini-title {
-        color: white;
+
+    .header-container > .header > .sub-title {
         font-size: 4vh;
-        text-align: center;
-        margin-bottom: 5vh;
-    }
-    
-    .players {
-        display: flex;
-        flex-flow: row wrap;
-        height: 60vh;
-        width: 80vw;
-        justify-content: space-evenly;
-        align-items: center;
     }
     
     .reveal-players {
         display: flex;
         flex-flow: row wrap;
-        width: 80vw;
+        width: 95vw;
         justify-content: space-evenly;
+        align-items: center;
+    }
+    
+    .reveal-players > .player-card {
+        width: 47%;
+        height: 12vh;
+        border: 3px solid white;
+        border-radius: 20px;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
         align-items: center;
     }
     
     .player-card {
         width: 40%;
         height: 12vh;
-        margin-bottom: 3vh;
         border: 3px solid white;
         border-radius: 30px;
         display: flex;
@@ -523,7 +549,7 @@ input[type=number] {
         border: 3px solid white;
         animation: bg-color-animation 30s linear infinite;
         border-radius: 30px;
-        width: 50%;
+        width: 100%;
         height: 50%;
         margin: auto;
     }
@@ -532,31 +558,19 @@ input[type=number] {
         display: flex;
         flex-flow: column nowrap;
         align-items: center;
-        justify-content: center;
+        justify-content: space-evenly;
         height: 100%;
     }
     
-    dialog > div > button {
+    dialog > div > button,
+    .dialog-button {
         width: 40%;
     }
     
     .player-name {
         color: white;
-        font-size: 3vh;
-    }
-    
-    .main-button {
-        background-color: transparent;
-        color: white;
-        border-color: white;
-        border-style: solid;
-        border-radius: 2vw;
-        width: 20vw;
-        height: 10vh;
-        padding: 2vh;
-        font-size: 3vh;
-        margin-bottom: 2vh;
-        cursor: pointer;
+        font-size: 2vh;
+        text-align: center;
     }
     
     input {
@@ -566,18 +580,41 @@ input[type=number] {
         color: white;
         text-align: center;
     }
+
     
-    #join-code-input {
-        height: 3vh;
-        font-size: 3vh;
-        width: 10vh;
-        text-transform: uppercase;
+    #join-code-dialog > div > div:not(#join-code-div) {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: space-evenly;
+        align-items: center;
+        width: 90%;
     }
-    
+
+    #join-code-div {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .code-text {
+        color: white;
+        font-size: 4.5vh;
+        text-align: center;
+    }
+
+    #join-code-input {
+        height: 4.5vh;
+        font-size: 4.5vh;
+        width: 15vh;
+        text-transform: uppercase;
+        margin-left: 3vh;
+    }
+
     #player-name-input {
         height: 7vh;
         font-size: 5vh;
-        width: 90vw;
+        width: 80vw;
         border-radius: 20px;
         margin-bottom: 3vh;
     }
@@ -587,10 +624,10 @@ input[type=number] {
         position: absolute;
         top: 1vh;
         left: 1vh;
-        width: 5vw;
+        width: 20vw;
         height: 5vh;
         border: 3px solid white;
-        font-size: 1vh;
+        font-size: 2vh;
         border-radius: 1vh;
         display: flex;
         flex-flow: row nowrap;
@@ -606,15 +643,15 @@ input[type=number] {
         position: absolute;
         right: 0;
         top: 0;
-        width: 5vw;
-        height: 5vw;
+        width: 10vw;
+        height: 10vw;
         filter: invert(100%) drop-shadow(2px 2px 5px #555);
     }
     
     img#settings-icon {
         z-index: 200;
-        width: 5vw;
-        height: 5vw;
+        width: 10vw;
+        height: 10vw;
         filter: invert(100%) drop-shadow(2px 2px 5px #555);
     }
     
@@ -624,11 +661,11 @@ input[type=number] {
     
     #brightness-slider {
         position: absolute;
-        top: 6vw;
+        top: 11vw;
         right: 1vw;
         -webkit-appearance: none;  /* Override default CSS styles */
         appearance: none;
-        width: 20vw; /* Full-width */
+        width: 40vw; /* Full-width */
         height: 1vh; /* Specified height */
         background: white; /* Grey background */
         outline: none; /* Remove outline */
@@ -673,24 +710,24 @@ input[type=number] {
     .last-turn {
         font-size: 3vh;
         color: white;
-        line-height: 3vh;
-        margin-bottom: 2vh;
+        margin-bottom: 1vh;
+        text-align: center;
     }
     
     .standard-text {
         font-size: 3vh;
         color: white;
         line-height: 3vh;
-        margin-bottom: 2vh;
+        margin-bottom: 1vh;
     }
     
     .rolled-dice-list {
         display: flex;
         flex-flow: row nowrap;
         align-items: center;
-        justify-content: center;
+        justify-content: space-evenly;
         margin-bottom: 8vh;
-        width: 30vw;
+        width: 100vw;
     }
     
     .small-dice {
@@ -699,34 +736,7 @@ input[type=number] {
         display: inline;
         white-space: nowrap;
     }
-    
-    .reveal-dice {
-        height: 5vh;
-        white-space: nowrap;
-    }
-    
-    .game-buttons-container {
-        display: flex;
-        flex-flow: row nowrap;
-        width: 50vw;
-        justify-content: space-evenly;
-        margin-bottom: 4vh;
-    }
-    
-    .bid-options-container {
-        display: flex;
-        flex-flow: row nowrap;
-        width: 50vw;
-        justify-content: space-evenly;
-        margin-bottom: 2vh;
-    }
-    
-    #bid-amount-input {
-        height: 8vh;
-        width: 10vh;
-        font-size: 8vh;
-    }
-    
+
     .medium-dice {
         height: 8vh;
         margin: 0 0 -0.4vh 0;
@@ -736,7 +746,62 @@ input[type=number] {
     }
     
     .rolled-dice {
-        margin: 0 1.5vw;
+        margin: 0;
+    }
+    
+    .card-dice {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-evenly;
+        width: 95%;
+        margin-top: 2vh;
+    }
+    
+    .reveal-dice {
+        height: 3.5vh;
+        white-space: nowrap;
+    }
+
+    .responsive-text {
+        margin-bottom: 4vh;
+    }
+    
+    .game-buttons-container {
+        display: flex;
+        flex-flow: row nowrap;
+        width: 90vw;
+        justify-content: space-evenly;
+        margin-bottom: 4vh;
+    }
+    
+    .bid-options-container {
+        display: flex;
+        flex-flow: row nowrap;
+        width: 90vw;
+        justify-content: center;
+        margin-bottom: 2vh;
+    }
+
+    .bid-options-container > div:first-child {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .bid-options-container > div:last-child {
+        display: flex;
+        flex-flow: row wrap;
+        width: 70vw;
+        height: 19vh;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+    
+    #bid-amount-input {
+        height: 8vh;
+        width: 10vh;
+        font-size: 8vh;
     }
     
     input::-webkit-outer-spin-button,
@@ -752,15 +817,6 @@ input[type=number] {
     
     .unchosen {
         opacity: 0.5;
-    }
-    
-    .card-dice {
-        display: flex;
-        flex-flow: row nowrap;
-        align-items: center;
-        justify-content: space-evenly;
-        width: 90%;
-        margin-top: 2vh;
     }
     
     .dissolved {

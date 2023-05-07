@@ -6,6 +6,7 @@ const socket = io();
  * switch from document.getElementById to document.querySelector
  * Rulebook (html/css)
  * ***responsiveness***
+ * *rework brightness slider to dialog (modal)*
  * *****get jsdoc types working properly*****
  */
 
@@ -48,6 +49,11 @@ if (playerNames) playerNames = JSON.parse(playerNames);
 else playerNames = {};
 
 //#region home functions
+function home_ToggleDialog(show) {
+	if (show) document.querySelector("#join-code-dialog").showModal();
+	else document.querySelector("#join-code-dialog").close();
+}
+
 function home_JoinWithCode() {
 	const code = document.getElementById("join-code-input").value.toUpperCase();
 	const playerName = document.getElementById("player-name-input").value;
@@ -184,13 +190,11 @@ function lobby_StartGame() {
 }
 
 function lobby_OpenSettings() {
-	const dialog = document.querySelector("#settings-dialog");
-	dialog.showModal();
+	document.querySelector("#settings-dialog").showModal();
 }
 
 function lobby_CancelSettings() {
-	const dialog = document.querySelector("#settings-dialog");
-	dialog.close();
+	document.querySelector("#settings-dialog").close();
 }
 
 function lobby_SaveSettings() {
@@ -376,7 +380,7 @@ socket.on("sc-round-end", data => {
 	if (client.playerName == ownerName) {
 		(async () => {
 			await setTimeout(async () => {
-				document.getElementById("next-round-button").style.display = "inline";
+				document.getElementById("next-round-button").style.display = "flex";
 			}, nextRoundDelay);
 		})();
 	}

@@ -18,12 +18,21 @@
             <h1 class="main-title standard-shadow">Perudo</h1>
             <input type="text" class="standard-shadow" placeholder="Naam" id="player-name-input">
             <div class="home-buttons-container">
-                <div class="input-buttons-container">
-                    <button class="main-button standard-shadow" onclick="home_JoinWithCode()">Join met code:</button>
-                    <input type="text" id="join-code-input" class="standard-shadow" placeholder="DJAL">
-                </div>
+                <button class="main-button standard-shadow" onclick="home_ToggleDialog(true)">Join met code:</button>
                 <button class="main-button standard-shadow" onclick="home_CreateLobby()">Maak lobby aan</button>
             </div>
+            <dialog id="join-code-dialog" class="standard-shadow">
+                <div>
+                    <div id="join-code-div">
+                        <h2 class="code-text standard-shadow">Code: </h2>
+                        <input id="join-code-input" class="standard-shadow" type="text" placeholder="DJAL">
+                    </div>
+                    <div>
+                        <button class="main-button standard-shadow dialog-button" onclick="home_ToggleDialog(false)">Annuleren</button>
+                        <button class="main-button standard-shadow dialog-button" onclick="home_JoinWithCode()">Join</button>
+                    </div>
+                </div>
+            </dialog>
             <!-- <input id="inp-test" type="text"><button onclick="send()">Test!</button> -->
         </div>
     </div>
