@@ -17,7 +17,6 @@ const maxDice = 5;
  * Rulesets (pacifico rules, amount of dice, etc.)
  * add log function + useful logs
  * name verification
- * bid verification (check if person is allowed to bid + if bid is valid)
  * general socket.on verification (check if person has permission)
  */
 
@@ -152,13 +151,42 @@ fs.readFile("client/index.html", function(err, html) {
 		socket.on("cs-game-bid", ({lobbyCode, player, bid}) => {
 			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
+			if (player.playerName != game.playersTurn.playerName) {
+				socket.emit("sc-error", {errorMessage: "Wacht tot je aan de beurt bent om een bod te doen."});
+				console.log(player);
+				console.dir(game, {depth: null})
+				return;
+			}
+			const lastTurn = game.lastTurn;
+			// bid verification
+			if ( // restructure this
+				!(
+					(bid.type > lastTurn.bid.type && bid.amount >= lastTurn.bid.amount) // verhoog soort dobbelstenen
+					|| (bid.type >= lastTurn.bid.type && bid.amount > lastTurn.bid.amount && lastTurn.bid.type != 12) // verhoog aantal dobbelstenen
+					|| (bid.amount > lastTurn.bid.amount * 2 && lastTurn.bid.type == 12 && bid.type != 12) // switch van jokers en verhoog
+					|| (bid.amount > Math.floor(lastTurn.bid.amount / 2) && lastTurn.bid.type != 12 && bid.type == 12) // switch naar jokers en verhoog
+					|| (bid.type == 12 && lastTurn.bid.type == 12 && bid.amount > lastTurn.bid.amount) // verhoog met jokers
+				) // || !(bid.amount > 0 && bid.type > 0)
+			) {
+				socket.emit("sc-error", {errorMessage: "Jouw bod is ongeldig. Probeer het opnieuw met een ander bod."});
+				return;
+			} else if (
+				lastTurn.player && game.pacifico
+				&& bid.type != lastTurn.bid.type
+				&& player.playerNum in game.dice
+				&& game.dice[player.playerNum].length != 1
+			) {
+				socket.emit("sc-error", {errorMessage: "Jouw bod is ongeldig. Omdat dit een pacifico-ronde (armoederonde) is, moet je dezelfde dobbelsteen kiezen als de vorige persoon, tenzij je maar één dobbelsteen in bezit hebt."});
+				return;
+			}
 
 			if (player.playerName != game.playersTurn.playerName) return;
 			game.playersTurn = next(lobbyCode, player);
+			game.lastTurn = {bid: bid, player: player}
 			io.sockets.in(lobbyCode).emit("sc-new-turn", {
 				lobbyCode: lobbyCode,
 				playersTurn: game.playersTurn,
-				lastTurn: {bid: bid, player: player},
+				lastTurn: game.lastTurn,
 				pacifico: game.pacifico
 			});
 		});
@@ -286,6 +314,7 @@ function newRound(lobbyCode, pacifico) {
 	}
 	game.diceCounts = diceCounts;
 	game.dice = dice;
+	game.lastTurn = {bid: {type: 0, amount: 0}};
 	
 	io.sockets.in(lobbyCode).emit("sc-new-turn", {
 		lobbyCode: lobbyCode,
@@ -294,6 +323,7 @@ function newRound(lobbyCode, pacifico) {
 		lastTurn: null,
 		dice: dice
 	});
+	// console.dir(game, {depth: null});
 }
 
 function endGame(lobbyCode) {

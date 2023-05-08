@@ -258,7 +258,7 @@ input {
 #join-code-input {
     height: 9vh;
     font-size: 9vh;
-    width: 30vh;
+    width: 34.5vh;
     text-transform: uppercase;
     margin-left: 3vh;
 }
@@ -606,7 +606,7 @@ input[type=number] {
     #join-code-input {
         height: 4.5vh;
         font-size: 4.5vh;
-        width: 15vh;
+        width: 17.25vh;
         text-transform: uppercase;
         margin-left: 3vh;
     }

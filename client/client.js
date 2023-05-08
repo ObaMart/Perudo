@@ -5,7 +5,6 @@ const socket = io();
  * add preselection on amount of dice in bid phase & a +1 button
  * switch from document.getElementById to document.querySelector
  * Rulebook (html/css)
- * ***responsiveness***
  * *rework brightness slider to dialog (modal)*
  * *****get jsdoc types working properly*****
  */
@@ -216,15 +215,6 @@ if (page == "/game.html") {
 	socket.emit("cs-game-ready", {player: client, lobbyCode: lobbyCode});
 }
 
-// socket.on("sc-player-info", players => {
-// 	for (const player of players) {
-// 		if (player.playerName == client.playerName) {
-// 			client.playerNum = player.playerNum;
-// 			break;
-// 		}
-// 	}
-// });
-
 function game_Dudo() {
 	socket.emit("cs-game-dudo", {lobbyCode: lobbyCode, player: client, lastTurn: roundData.lastTurn});
 }
@@ -242,25 +232,25 @@ function game_Bid() {
 		if (!confirm(`Weet je zeker dat je ${chosenBidAmount} dobbelstenen wilt bieden?`)) return;
 	}
 	if ( // restructure this
-		(
+		!(
 			(chosenDiceType > roundData.lastTurn.bid.type && chosenBidAmount >= roundData.lastTurn.bid.amount) // verhoog soort dobbelstenen
 			|| (chosenDiceType >= roundData.lastTurn.bid.type && chosenBidAmount > roundData.lastTurn.bid.amount && roundData.lastTurn.bid.type != 12) // verhoog aantal dobbelstenen
-			|| (chosenBidAmount > roundData.lastTurn.bid.amount * 2 && roundData.lastTurn.bid.type == 12 && chosenDiceType != 12) // switch van pelikanen en verhoog
-			|| (chosenBidAmount > Math.floor(roundData.lastTurn.bid.amount / 2) && roundData.lastTurn.bid.type != 12 && chosenDiceType == 12) // switch naar pelikanen en verhoog
-			|| (chosenDiceType == 12 && roundData.lastTurn.bid.type == 12 && chosenBidAmount > roundData.lastTurn.bid.amount)
-		)
-		&& (chosenBidAmount > 0 && chosenDiceType > 0)
+			|| (chosenBidAmount > roundData.lastTurn.bid.amount * 2 && roundData.lastTurn.bid.type == 12 && chosenDiceType != 12) // switch van jokers en verhoog
+			|| (chosenBidAmount > Math.floor(roundData.lastTurn.bid.amount / 2) && roundData.lastTurn.bid.type != 12 && chosenDiceType == 12) // switch naar jokers en verhoog
+			|| (chosenDiceType == 12 && roundData.lastTurn.bid.type == 12 && chosenBidAmount > roundData.lastTurn.bid.amount) // verhoog jokers
+		) || !(chosenBidAmount > 0 && chosenDiceType > 0)
 	) {
-		// valid
-		if (roundData.lastTurn.player.playerName && roundData.pacifico && chosenDiceType != roundData.lastTurn.bid.type && roundData.clientDice && roundData.clientDice.length != 1) {
-			alert("Jouw bod is ongeldig. Omdat dit een pacifico-ronde (armoederonde) is, moet je dezelfde dobbelsteen kiezen als de vorige persoon, tenzij je maar één dobbelsteen in bezit hebt.");
-			return;
-		}
-		socket.emit("cs-game-bid", {lobbyCode: lobbyCode, player: client, bid: {amount: chosenBidAmount, type: chosenDiceType}});
-	} else {
 		alert("Jouw bod is ongeldig. Probeer het opnieuw met een ander bod.");
 		return;
+	} else if (
+		roundData.lastTurn.player.playerName && roundData.pacifico
+		&& chosenDiceType != roundData.lastTurn.bid.type
+		&& roundData.clientDice && roundData.clientDice.length != 1
+	) {
+		alert("Jouw bod is ongeldig. Omdat dit een pacifico-ronde (armoederonde) is, moet je dezelfde dobbelsteen kiezen als de vorige persoon, tenzij je maar één dobbelsteen in bezit hebt.");
+		return;
 	}
+	socket.emit("cs-game-bid", {lobbyCode: lobbyCode, player: client, bid: {amount: chosenBidAmount, type: chosenDiceType}});
 }
 
 socket.on("sc-new-turn", data => {
