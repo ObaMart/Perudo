@@ -3,10 +3,11 @@ const socket = io();
 /** TODO:
  * Page verification on every socket.on
  * add preselection on amount of dice in bid phase & a +1 button
- * switch from document.getElementById to document.querySelector
+ * fix querySelectors for conciseness
  * Rulebook (html/css)
  * *rework brightness slider to dialog (modal)*
  * *****get jsdoc types working properly*****
+ * Display clients which haven't chosen color
  */
 
 /**
@@ -54,8 +55,8 @@ function home_ToggleDialog(show) {
 }
 
 function home_JoinWithCode() {
-	const code = document.getElementById("join-code-input").value.toUpperCase();
-	const playerName = document.getElementById("player-name-input").value;
+	const code = document.querySelector("#join-code-input").value.toUpperCase();
+	const playerName = document.querySelector("#player-name-input").value;
 	if (playerName == "") {
 		alert("Je moet een naam invullen.");
 	} else if (!isAlphaNumeric(playerName)) {
@@ -71,7 +72,7 @@ function home_JoinWithCode() {
 }
 
 function home_CreateLobby() {
-	const playerName = document.getElementById("player-name-input").value;
+	const playerName = document.querySelector("#player-name-input").value;
 	if (playerName == "") {
 		alert("Je moet een naam invullen.");
 	} else if (!isAlphaNumeric(playerName)) {
@@ -95,12 +96,12 @@ function home() { // return to home
 
 //#region brightness
 let brightnessSliderValue = 0.9
-const brightnessSlider = document.getElementById("brightness-slider");
+const brightnessSlider = document.querySelector("#brightness-slider");
 const b = sessionStorage.getItem("brightness");
 if (b) {
 	brightnessSliderValue = parseFloat(b);
 }
-document.getElementById("dynamic-brightness-overlay").style.backgroundColor = `hsla(0, 0%, 0%, ${0.7 * (1 - brightnessSliderValue)})`
+document.querySelector("#dynamic-brightness-overlay").style.backgroundColor = `hsla(0, 0%, 0%, ${0.7 * (1 - brightnessSliderValue)})`
 brightnessSlider.value = brightnessSliderValue;
 let brightnessSliderVisible = false;
 function toggleBrightnessSlider() {
@@ -115,7 +116,7 @@ function toggleBrightnessSlider() {
 
 brightnessSlider.oninput = function() {
 	brightnessSliderValue = brightnessSlider.value
-    document.getElementById("dynamic-brightness-overlay").style.backgroundColor = `hsla(0, 0%, 0%, ${0.7 * (1 - brightnessSliderValue)})`
+    document.querySelector("#dynamic-brightness-overlay").style.backgroundColor = `hsla(0, 0%, 0%, ${0.7 * (1 - brightnessSliderValue)})`
 }
 //#endregion brightness
 
@@ -149,11 +150,11 @@ if (page == "/lobby.html") {
 		sessionStorage.setItem("lobbyCode", lobbyCode);
 		socket.emit("cs-lobby-create", {lobbyCode: lobbyCode, playerName: clientName});
 	} else {
-		document.getElementById("start-game-button").style.display = "none";
-		document.getElementById("settings-icon").style.display = "none";
+		document.querySelector("#start-game-button").style.display = "none";
+		document.querySelector("#settings-icon").style.display = "none";
 		socket.emit("cs-lobby-join", {lobbyCode: lobbyCode, playerName: clientName});
 	}
-	document.getElementById("lobby-code").innerHTML = lobbyCode
+	document.querySelector("#lobby-code").innerHTML = lobbyCode
 }
 socket.on("sc-lobby-player-update", data => {
 	Object.entries(data).forEach(([colorNum, playerName]) => {
@@ -224,7 +225,7 @@ function game_Calza() {
 }
 
 function game_Bid() {
-	const chosenBidAmount = parseInt(document.getElementById("bid-amount-input").value);
+	const chosenBidAmount = parseInt(document.querySelector("#bid-amount-input").value);
 	if (chosenBidAmount > 40) {
 		alert("Je kan niet meer dan 40 dobbelstenen bieden, want er kunnen maximaal 40 dobbelstenen in het spel zitten.");
 		return;
@@ -255,7 +256,7 @@ function game_Bid() {
 
 socket.on("sc-new-turn", data => {
 	const {lobbyCode, playersTurn, lastTurn, pacifico, dice} = data;
-	document.getElementById("players-dice-container").innerHTML = "";
+	document.querySelector("#players-dice-container").innerHTML = "";
 	roundData.lastTurn = lastTurn;
 	roundData.pacifico = pacifico;
 	if (pacifico) {
@@ -273,7 +274,7 @@ socket.on("sc-new-turn", data => {
 				document.getElementById(`rolled-dice${i+1}-yt`).style.display = "none";
 				document.getElementById(`rolled-dice${i+1}-ot`).style.display = "none";
 			}
-			document.getElementById("your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
+			document.querySelector("#your-dice-text").innerHTML = "Je hebt geen dobbelstenen meer, je ligt uit het spel"
 		}
 	}
 	chosenDiceType = 0;
@@ -307,11 +308,11 @@ socket.on("sc-new-turn", data => {
 		for (const x of [2, 3, 4, 5, 6, 12]) {
 			document.getElementById(`dice${x}`).classList.add("unchosen");
 		}
-		document.getElementById("bid-amount-input").value = "";
+		document.querySelector("#bid-amount-input").value = "";
 		showGamePage("your-turn");
 		if (lastTurn && lastTurn.player.playerName) game_Select(lastTurn.bid.type);
-		document.getElementById("bid").innerHTML = lastTurn ? "Verhogen" : "Bieden";
-		document.getElementById("game-buttons-container").style.display = lastTurn ? "flex" : "none";
+		document.querySelector("#bid").innerHTML = lastTurn ? "Verhogen" : "Bieden";
+		document.querySelector("#game-buttons-container").style.display = lastTurn ? "flex" : "none";
 	} else {
 		// Others turn
 		showGamePage("others-turn");
@@ -323,25 +324,25 @@ socket.on("sc-round-end", data => {
 	const {inflicter, lastTurn, dice, ownerName, guessedDiceAmount, winner, loser, type} = data;
 	const inflicted = lastTurn.player
 	showGamePage("reveal-round");
-	document.getElementById("next-round-button").style.display = "none";
+	document.querySelector("#next-round-button").style.display = "none";
 	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-0)`;
-	if (type == "dudo") document.getElementById("inflicter-action").innerHTML = `${inflicter.playerName} betwijfelt de gok van ${inflicted.playerName}`;
-	else document.getElementById("inflicter-action").innerHTML = `${inflicter.playerName} denkt dat de gok van ${inflicted.playerName} exact klopt`;
-	document.getElementById("guess-amount").innerHTML = lastTurn.bid.amount;
-	document.getElementById("guess-type").src = `icons/dice/${lastTurn.bid.type}.png`;
+	if (type == "dudo") document.querySelector("#inflicter-action").innerHTML = `${inflicter.playerName} betwijfelt de gok van ${inflicted.playerName}`;
+	else document.querySelector("#inflicter-action").innerHTML = `${inflicter.playerName} denkt dat de gok van ${inflicted.playerName} exact klopt`;
+	document.querySelector("#guess-amount").innerHTML = lastTurn.bid.amount;
+	document.querySelector("#guess-type").src = `icons/dice/${lastTurn.bid.type}.png`;
 	// v
 	if (winner && dice[winner.playerNum].length != maxDice) {
-		document.getElementById("winner-loser-action").innerHTML = 
+		document.querySelector("#winner-loser-action").innerHTML = 
 			`${winner.playerName} krijgt een dobbelsteen erbij, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.bid.type}.png" class="dice small-dice"> in het spel`;
 	} else if (winner) {
-		document.getElementById("winner-loser-action").innerHTML = 
+		document.querySelector("#winner-loser-action").innerHTML = 
 			`${winner.playerName} krijgt niks, want er is exact ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.bid.type}.png" class="dice small-dice"> in het spel, maar ${winner.playerName} heeft al ${maxDice} dobbelstenen`;
 	} else {
-		document.getElementById("winner-loser-action").innerHTML = 
+		document.querySelector("#winner-loser-action").innerHTML = 
 			`${loser.playerName} moet een dobbelsteen inleveren, want er is ${guessedDiceAmount} keer een <img src="icons/dice/${lastTurn.bid.type}.png" class="dice small-dice"> in het spel`;
 	}
 	// ^ move this stuff to index.js (send string instead of game.dice) (unnecessary client-side logic)
-	const container = document.getElementById("players-dice-container");
+	const container = document.querySelector("#players-dice-container");
 	let diceList, card, cardName, cardDice, cardDie
 	for (const playerNum in dice) {
 		diceList = dice[playerNum];
@@ -350,7 +351,7 @@ socket.on("sc-round-end", data => {
 		card.style.backgroundColor = `var(--clr-${playerNum});`;
 		cardName = document.createElement("p");
 		cardName.classList.add("player-name", "standard-shadow");
-		cardName.innerHTML = playerNames[playerNum]; // FIND SOLUTION FOR THIS, nameColors DOESN'T EXIST, SHOW playerName INSTEAD OF playerNum // MAYBE USE sc-player-info
+		cardName.innerHTML = playerNames[playerNum];
 		cardDice = document.createElement("div");
 		cardDice.classList.add("card-dice");
 		if (winner && winner.playerNum == playerNum && diceList.length != maxDice) diceList.push("P");
@@ -370,7 +371,7 @@ socket.on("sc-round-end", data => {
 	if (client.playerName == ownerName) {
 		(async () => {
 			await setTimeout(async () => {
-				document.getElementById("next-round-button").style.display = "flex";
+				document.querySelector("#next-round-button").style.display = "flex";
 			}, nextRoundDelay);
 		})();
 	}
@@ -436,8 +437,8 @@ if (page == "/winner.html") {
 	const backgroundColor = sessionStorage.getItem("winnerColor");
 	const winnerDice = sessionStorage.getItem("winnerDice");
 	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${backgroundColor})`;
-	document.getElementById("winner-name").innerHTML = winnerName;
-	document.getElementById("winner-dice").innerHTML = winnerDice;
+	document.querySelector("#winner-name").innerHTML = winnerName;
+	document.querySelector("#winner-dice").innerHTML = winnerDice;
 }
 //#endregion end screen
 

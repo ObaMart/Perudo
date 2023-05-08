@@ -18,6 +18,8 @@ const maxDice = 5;
  * add log function + useful logs
  * name verification
  * general socket.on verification (check if person has permission)
+ * auto-end when second-to-last person leaves
+ * Switch lobby owner when lobby owner leaves (don't terminate game)
  */
 
 fs.readFile("client/index.html", function(err, html) {
@@ -36,6 +38,7 @@ fs.readFile("client/index.html", function(err, html) {
 			if (player.playerName == game.lobbyOwner.playerName) {
 				io.sockets.in(lobbyCode).emit("sc-error-fatal", {errorMessage: `Het spel is afgelopen omdat lobby-eigenaar ${player.playerName} het spel heeft verlaten.`});
 				delete games[lobbyCode];
+				log(lobbyCode, 3, "Lobby has been terminated because the owner left.")
 				return;
 			}
 			if (game.seats) {
@@ -46,16 +49,17 @@ fs.readFile("client/index.html", function(err, html) {
 						break;
 					}
 				}
+				log(lobbyCode, 0, `Player ${player.playerName} left the lobby.`);
 				if (game.seats) io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
 			} else if (game.participants) {
 				for (const [index, participant] of game.participants.entries()) {
 					if (participant.player.playerName == player.playerName) {
 						game.participants.splice(index, 1);
-						try {delete game.dice[playerNum]} catch {console.error(`Did not get playerNum from ${playerName}`)}
-						console.dir(game, {depth: null});
+						try {delete game.dice[player.playerNum]} catch {console.error(`Did not get playerNum from ${player.playerName}`)}
 						break;
 					}
 				}
+				log(lobbyCode, 0, `Player ${player.playerName} left the game.`);
 			}
 		})
 		//#endregion home
@@ -68,6 +72,7 @@ fs.readFile("client/index.html", function(err, html) {
 			}
 			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null}, joinedPlayers: [playerName], lobbyOwner: {playerNum: null, playerName: playerName}}
 			socket.join(lobbyCode);
+			log(lobbyCode, 0, "Created lobby!")
 		});
 
 		socket.on("cs-lobby-join", ({lobbyCode, playerName}) => {
@@ -129,23 +134,19 @@ fs.readFile("client/index.html", function(err, html) {
 
 			// Loop game
 			io.sockets.in(lobbyCode).emit("sc-game-start", {lobbyCode: lobbyCode});
-			console.log(`Game ${lobbyCode} is starting...`);
+			log(lobbyCode, 0, "Game is starting...")
 			game.participants = [];
-			// game.nameColors = {};
 			game.pacifico = false;
 			for (const playerNum in game.seats) {
 				if (game.seats[playerNum]) {
 					game.participants.push({player: {playerNum: playerNum, playerName: game.seats[playerNum]}, dice: maxDice, beenPacifico: false});
-					// game.nameColors[game.seats[playerNum]] = playerNum;
 				}
 			}
 			delete game.seats;
 			delete game.readyPlayers;
 			delete game.joinedPlayers;
 			game.playersTurn = randomChoice(game.participants).player;
-			io.sockets.in(lobbyCode).emit("sc-player-info", game.participants.map(obj => obj.player));
 			newRound(lobbyCode, false);
-			// console.dir(game, {depth: null});
 		});
 		
 		socket.on("cs-game-bid", ({lobbyCode, player, bid}) => {
@@ -153,8 +154,6 @@ fs.readFile("client/index.html", function(err, html) {
 			const game = games[lobbyCode];
 			if (player.playerName != game.playersTurn.playerName) {
 				socket.emit("sc-error", {errorMessage: "Wacht tot je aan de beurt bent om een bod te doen."});
-				console.log(player);
-				console.dir(game, {depth: null})
 				return;
 			}
 			const lastTurn = game.lastTurn;
@@ -216,10 +215,7 @@ fs.readFile("client/index.html", function(err, html) {
 			loserParticipant.dice -= 1;
 			game.playersTurn = loser;
 			if (loserParticipant.dice == 0) {
-				// console.log(loserParticipant);
-				// console.log(game.participants.indexOf(loserParticipant));
 				game.participants.splice(game.participants.indexOf(loserParticipant), 1);
-				// console.log(game.participants);
 				delete game.dice[loser.playerNum];
 				game.playersTurn = randomChoice(game.participants).player;
 				game.pacifico = false;
@@ -323,14 +319,13 @@ function newRound(lobbyCode, pacifico) {
 		lastTurn: null,
 		dice: dice
 	});
-	// console.dir(game, {depth: null});
 }
 
 function endGame(lobbyCode) {
 	if (!(lobbyCode in games)) return;
 	const game = games[lobbyCode];
 	const winner = game.participants[0];
-	console.log(`Game ends with winner ${winner.player.playerName}`);
+	log(lobbyCode, 1, `Game ends with winner ${winner.player.playerName}`);
 	io.sockets.in(lobbyCode).emit("sc-game-end", {winner: winner});
 	delete games[lobbyCode];
 }
@@ -374,5 +369,27 @@ function objEqual(x, y) {
 	  ok(x).length === ok(y).length &&
 		ok(x).every(key => objEqual(x[key], y[key]))
 	) : (x === y);
+}
+
+function log(lobbyCode, level, message) {
+	let prefix;
+	switch (level) {
+		case 0:
+			prefix = "i";
+			break;
+
+		case 1:
+			prefix = "√";
+			break;
+
+		case 2: 
+			prefix = "!";
+			break;
+
+		case 3:
+			prefix = "X";
+			break;
+	}
+	console.log(`[${lobbyCode}] (${prefix}) ${message}`);
 }
 //#endregion general functions
