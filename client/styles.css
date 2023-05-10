@@ -470,6 +470,26 @@ input[type=number] {
     /* text-decoration: underline; */
 }
 
+.players-without-color {
+    position: absolute;
+    left: 1vw;
+    display: flex;
+    flex-flow: column nowrap;
+    border: 3px solid white;
+    border-radius: 20px;
+}
+
+.players-without-color > p {
+    padding: 1vh;
+    font-size: 2vh;
+    color: white;
+    text-align: center;
+}
+
+.players-without-color:empty {
+    visibility: hidden;
+}
+
 @media (max-aspect-ratio: 1) { /* Phone responsiveness*/
     .home-container {
         display: flex;

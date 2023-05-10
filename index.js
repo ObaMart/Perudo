@@ -18,8 +18,7 @@ const maxDice = 5;
  * add log function + useful logs
  * name verification
  * general socket.on verification (check if person has permission)
- * auto-end when second-to-last person leaves
- * Switch lobby owner when lobby owner leaves (don't terminate game)
+ * t// auto-end when second-to-last person leaves
  */
 
 fs.readFile("client/index.html", function(err, html) {
@@ -35,12 +34,6 @@ fs.readFile("client/index.html", function(err, html) {
 			if (!(lobbyCode in games)) return;
 			const game = games[lobbyCode];
 			
-			if (player.playerName == game.lobbyOwner.playerName) {
-				io.sockets.in(lobbyCode).emit("sc-error-fatal", {errorMessage: `Het spel is afgelopen omdat lobby-eigenaar ${player.playerName} het spel heeft verlaten.`});
-				delete games[lobbyCode];
-				log(lobbyCode, 3, "Lobby has been terminated because the owner left.")
-				return;
-			}
 			if (game.seats) {
 				game.joinedPlayers.splice(game.joinedPlayers.indexOf(player.playerName), 1);
 				for (const i in game.seats) {
@@ -51,6 +44,12 @@ fs.readFile("client/index.html", function(err, html) {
 				}
 				log(lobbyCode, 0, `Player ${player.playerName} left the lobby.`);
 				if (game.seats) io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
+				if (player.playerName == game.lobbyOwner.playerName) {
+					game.lobbyOwner = {playerName: randomChoice(game.joinedPlayers), playerNum: null};
+					io.sockets.in(lobbyCode).emit("sc-lobby-new-owner", game.lobbyOwner);
+					log(lobbyCode, 2, `Player ${player.playerName} was the owner of the lobby, ownership has been transferred to ${game.lobbyOwner.playerName}`);
+					return;
+				}
 			} else if (game.participants) {
 				for (const [index, participant] of game.participants.entries()) {
 					if (participant.player.playerName == player.playerName) {
@@ -60,6 +59,15 @@ fs.readFile("client/index.html", function(err, html) {
 					}
 				}
 				log(lobbyCode, 0, `Player ${player.playerName} left the game.`);
+				if (game.participants.length == 1) {
+					endGame(lobbyCode);
+					return;
+				}
+				if (player.playerName == game.lobbyOwner.playerName) {
+					game.lobbyOwner = randomChoice(game.participants).player;
+					log(lobbyCode, 2, `Player ${player.playerName} was the owner of the lobby, ownership has been transferred to ${game.lobbyOwner.playerName}`);
+					return;
+				}
 			}
 		})
 		//#endregion home
@@ -72,7 +80,8 @@ fs.readFile("client/index.html", function(err, html) {
 			}
 			games[lobbyCode] = {seats: {1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null}, joinedPlayers: [playerName], lobbyOwner: {playerNum: null, playerName: playerName}}
 			socket.join(lobbyCode);
-			log(lobbyCode, 0, "Created lobby!")
+			log(lobbyCode, 0, "Created lobby!");
+			io.sockets.in(lobbyCode).emit("sc-joined-players-no-color", [playerName]);
 		});
 
 		socket.on("cs-lobby-join", ({lobbyCode, playerName}) => {
@@ -91,6 +100,11 @@ fs.readFile("client/index.html", function(err, html) {
 			game.joinedPlayers.push(playerName);
 			socket.join(lobbyCode);
 			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
+			// const nonChosenPlayers = [];
+			// for (const playerName of game.joinedPlayers) {
+			// 	if (!(playerName in Object.values(game.seats))) nonChosenPlayers.push()
+			// }
+			io.sockets.in(lobbyCode).emit("sc-joined-players-no-color", game.joinedPlayers.filter(playerName => !Object.values(game.seats).includes(playerName)));
 		});
 
 		socket.on("cs-lobby-color-choice", ({lobbyCode, playerName, color}) => {
@@ -99,6 +113,7 @@ fs.readFile("client/index.html", function(err, html) {
 
 			if (!game.seats[color]) game.seats[color] = playerName;
 			io.sockets.in(lobbyCode).emit("sc-lobby-player-update", game.seats);
+			io.sockets.in(lobbyCode).emit("sc-joined-players-no-color", game.joinedPlayers.filter(playerName => !Object.values(game.seats).includes(playerName)));
 		});
 
 		socket.on("cs-lobby-start", ({lobbyCode, playerName}) => {

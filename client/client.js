@@ -7,7 +7,7 @@ const socket = io();
  * Rulebook (html/css)
  * *rework brightness slider to dialog (modal)*
  * *****get jsdoc types working properly*****
- * Display clients which haven't chosen color
+ * Display credits on bottom left at home screen
  */
 
 /**
@@ -174,6 +174,23 @@ socket.on("sc-lobby-player-update", data => {
 	});
 });
 
+socket.on("sc-joined-players-no-color", players => {
+	const container = document.querySelector(".players-without-color")
+	container.innerHTML = "";
+	if (players.length > 0) players.unshift("Wachten op:")
+	for (const playerName of players) {
+		const el = document.createElement("p");
+		el.innerHTML = playerName;
+		container.appendChild(el);
+	}
+});
+
+socket.on("sc-lobby-new-owner", ({playerName}) => {
+	if (playerName == client.playerName) {
+		document.querySelector("#start-game-button").style.display = "inline";
+		document.querySelector("#settings-icon").style.display = "inline";
+	}
+})
 function lobby_ChooseColor(colorNum) {
 	if (selected) {
 		alert("Je hebt al een kleur gekozen.")
