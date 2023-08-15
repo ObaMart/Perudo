@@ -8,11 +8,25 @@
 </head>
 <body>
     <div class="brightness">
-        <img src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="toggleBrightnessSlider()">
+        <img class="brightness-icon" src="icons/sun.svg" alt="Brightness icon" id="brightness-icon" onclick="colorMode_ShowModal()">
         <input type="range" min="0" max="1" value="0.9" step="0.01" id="brightness-slider" style="opacity: 0">
+        <dialog id="colormode-dialog">
+            <div>
+                <h4>Dit tabblad is nog niet klaar!</h4>
+                <!-- <input type="range" min="0" max="1" value="0.9" step="0.01" id="brightness-slider" style="opacity: 0"> -->
+                <input type="radio" id="colormode-dark" name="colormode" value="dark" onchange="colorMode_Change()">
+                <label for="dark">Dark</label>
+                <input type="radio" id="colormode-color" name="colormode" value="colorful" checked onchange="colorMode_Change()">
+                <label for="colorful">Colorful</label>
+                <button onclick="colorMode_CloseModal()">Sluiten</button>
+            </div>
+        </dialog>
     </div>
     <div class="main">
-        <div class="main-color-overlay" style="background-color: hsla(0, 100%, 100%, 0)"></div>
+        <div class="backgrounds" id="animated-color-bg"></div>
+        <div class="backgrounds" id="variable-color-bg"></div>
+        <div class="backgrounds" id="dark-mode-bg"></div>
+        <!-- <div class="main-color-overlay" style="background-color: hsla(0, 100%, 100%, 0)"></div> -->
         <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
         <div class="back-to-home standard-shadow" onclick="home()">Verlaat lobby</div>
         <div class="home-container">

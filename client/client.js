@@ -36,7 +36,6 @@ const allColors = ["clr1","clr2","clr3","clr4","clr5","clr6", "clr7", "clr8"];
 const nextRoundDelay = 1000; //ms
 const gameEndDelay = 20000;
 
-// const urlParams = new URLSearchParams(window.location.search);
 const clientName = sessionStorage.getItem("clientName");
 const clientNum = sessionStorage.getItem("clientNum");
 const client = {playerName: clientName, playerNum: clientNum};
@@ -95,6 +94,72 @@ function home() { // return to home
 //#endregion home functions
 
 //#region brightness
+function colorMode_ShowModal() {
+	document.querySelector("#colormode-dialog").showModal();
+}
+
+function colorMode_CloseModal() {
+	document.querySelector("#colormode-dialog").close();
+}
+
+function colorMode_Change() {
+	let colormode;
+	if (document.querySelector("#colormode-dark").checked) {
+		colormode = "dark"
+	} else {
+		colormode = "colorful"
+	}
+	// console.log(`changed colormode to ${colormode}`)
+	colorMode_Set(colormode)
+	sessionStorage.setItem("colormode", colormode);
+}
+
+function colorMode_Set(mode) {
+	document.querySelectorAll(".backgrounds").forEach(el => el.style.opacity = 0)
+	console.log(`Set mode to ${mode}`)
+	if (mode == "colorful") {
+		if (page == "/lobby.html" || page == "/") {
+			const bg = document.querySelector("#animated-color-bg");
+			bg.style.opacity = 1;
+			console.log("Set to animated color background")
+		} else {
+			const bg = document.querySelector("#variable-color-bg");
+			bg.style.opacity = 1;
+			console.log("Set to variable color background")
+		}
+		root.style.setProperty("--clr-shadow", "#555");
+		root.style.setProperty("--shadow-offset", "2px");
+		root.style.setProperty("--shadow-radius", "5px");
+	} else { // dark mode
+		const bg = document.querySelector("#dark-mode-bg");
+		bg.style.opacity = 1;
+		console.log("Set to dark mode background");
+		if (page == "/lobby.html" || page == "/") {
+			root.style.setProperty("--clr-shadow", "#555");
+		} else {
+			root.style.setProperty("--clr-shadow", "var(--clr-active)");
+		}
+		root.style.setProperty("--shadow-offset", "0");
+		root.style.setProperty("--shadow-radius", "15px");
+	}
+}
+
+const mode = sessionStorage.getItem("colormode");
+const root = document.querySelector(":root");
+function setActiveColor(newColor) {
+	// document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${playersTurn.playerNum})`;
+	root.style.setProperty("--clr-active", `var(--clr-${newColor}`);
+	if (newColor == 10 && mode == "colorful") {
+		document.querySelector("#animated-color-bg").style.opacity = 1;
+		document.querySelector("#variable-color-bg").style.opacity = 0;
+	} else if (mode == "colorful") {
+		document.querySelector("#animated-color-bg").style.opacity = 0;
+		document.querySelector("#variable-color-bg").style.opacity = 1;
+	}
+}
+
+if (mode) colorMode_Set(mode)
+else {colorMode_Set("colorful")}
 let brightnessSliderValue = 0.9
 const brightnessSlider = document.querySelector("#brightness-slider");
 const b = sessionStorage.getItem("brightness");
@@ -102,7 +167,7 @@ if (b) {
 	brightnessSliderValue = parseFloat(b);
 }
 document.querySelector("#dynamic-brightness-overlay").style.backgroundColor = `hsla(0, 0%, 0%, ${0.7 * (1 - brightnessSliderValue)})`
-brightnessSlider.value = brightnessSliderValue;
+// brightnessSlider.value = brightnessSliderValue;
 let brightnessSliderVisible = false;
 function toggleBrightnessSlider() {
     if (brightnessSliderVisible) {
@@ -295,7 +360,7 @@ socket.on("sc-new-turn", data => {
 		}
 	}
 	chosenDiceType = 0;
-	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${playersTurn.playerNum})`;
+	setActiveColor(playersTurn.playerNum);
 	if (clientDice) {
 		for (let i = 0; i < maxDice; i++) {
 			const die = document.getElementById(`rolled-dice${i+1}-yt`);
@@ -342,7 +407,8 @@ socket.on("sc-round-end", data => {
 	const inflicted = lastTurn.player
 	showGamePage("reveal-round");
 	document.querySelector("#next-round-button").style.display = "none";
-	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-0)`;
+	// document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-0)`;
+	setActiveColor(10);
 	if (type == "dudo") document.querySelector("#inflicter-action").innerHTML = `${inflicter.playerName} betwijfelt de gok van ${inflicted.playerName}`;
 	else document.querySelector("#inflicter-action").innerHTML = `${inflicter.playerName} denkt dat de gok van ${inflicted.playerName} exact klopt`;
 	document.querySelector("#guess-amount").innerHTML = lastTurn.bid.amount;
@@ -453,7 +519,8 @@ if (page == "/winner.html") {
 	const winnerName = sessionStorage.getItem("winnerName");
 	const backgroundColor = sessionStorage.getItem("winnerColor");
 	const winnerDice = sessionStorage.getItem("winnerDice");
-	document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${backgroundColor})`;
+	// document.querySelector(".main-color-overlay").style.backgroundColor = `var(--clr-${backgroundColor})`;
+	setActiveColor(backgroundColor);
 	document.querySelector("#winner-name").innerHTML = winnerName;
 	document.querySelector("#winner-dice").innerHTML = winnerDice;
 }
