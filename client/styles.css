@@ -33,9 +33,13 @@
     100% {background-color: var(--clr-1)}
 }
 
+html, body, .main, .main-color-overlay, .main-brightness-overlay {
+  height: 100%;
+}
+
 .main {
     animation: bg-color-animation 30s linear infinite;
-    height: 100vh;
+    /* height: 100vh; */
     z-index: 0;
     width: 100vw;
     display: flex;
@@ -78,7 +82,7 @@
 .main-color-overlay {
     position: absolute;
     z-index: 1;
-    height: 100vh;
+    /* height: 100vh; */
     width: 100vw;
     transition: all 1s ease-in-out;
     -webkit-transition: all 1s ease-in-out;
@@ -90,7 +94,7 @@
 .main-brightness-overlay {
     position: absolute;
     z-index: 2;
-    height: 100vh;
+    /* height: 100vh; */
     width: 100vw;
 }
 

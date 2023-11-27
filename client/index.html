@@ -16,7 +16,7 @@
         <div class="main-brightness-overlay" id="dynamic-brightness-overlay" style="background-color: hsla(0, 0%, 0%, 0.07)"></div>
         <div class="home-container">
             <h1 class="main-title standard-shadow">Perudo</h1>
-            <input type="text" class="standard-shadow" placeholder="Naam" id="player-name-input">
+            <input type="text" class="standard-shadow" placeholder="Naam" id="player-name-input" maxlength="20">
             <div class="home-buttons-container">
                 <button class="main-button standard-shadow" onclick="home_ToggleDialog(true)">Join met code</button>
                 <button class="main-button standard-shadow" onclick="home_CreateLobby()">Maak lobby aan</button>
@@ -25,7 +25,7 @@
                 <div>
                     <div id="join-code-div">
                         <h2 class="code-text standard-shadow">Code: </h2>
-                        <input id="join-code-input" class="standard-shadow" type="text" placeholder="DJAL">
+                        <input id="join-code-input" class="standard-shadow" type="text" placeholder="DJAL" maxlength="4">
                     </div>
                     <div>
                         <button class="main-button standard-shadow dialog-button" onclick="home_ToggleDialog(false)">Annuleren</button>
