@@ -1,18 +1,15 @@
 {
-  "name": "nodejs",
+  "name": "Perudo",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "repository": "https://github.com/ObaMart/Perudo.git",
+  "author": "ObaMart",
+  "license": "MIT",
+  "private": true,
   "dependencies": {
-    "@types/node": "^18.0.6",
     "express": "^4.18.2",
-    "node-fetch": "^3.2.6",
-    "socket.io": "^4.6.1"
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
+    "socket.io": "^4.7.4"
   }
 }
