@@ -327,6 +327,7 @@ img.dice {
     outline: none; /* Remove outline */
     border-radius: 0.5vh;
     transition: opacity 0.3s;
+    z-index: 100;
 }
 
 #brightness-slider::-webkit-slider-thumb {

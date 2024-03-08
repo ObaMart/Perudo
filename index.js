@@ -15,10 +15,10 @@ const maxDice = 5;
 
 /** TODO:
  * Rulesets (pacifico rules, amount of dice, etc.)
- * add log function + useful logs
- * name verification
- * general socket.on verification (check if person has permission)
- * t// auto-end when second-to-last person leaves
+ * add log function + useful logs (done?)
+ * name verification (done?)
+ * general socket.on verification (check if person has permission) (done?)
+ * t// auto-end when second-to-last person leaves (done?)
  */
 
 fs.readFile("client/index.html", function(err, html) {
