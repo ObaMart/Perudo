@@ -51,39 +51,48 @@ else playerNames = {};
 
 //#region home functions
 function home_ToggleDialog(show) {
-  if (show) document.querySelector("#join-code-dialog").showModal();
-  else document.querySelector("#join-code-dialog").close();
+  if (show) {
+    const playerName = document.querySelector("#player-name-input").value;
+    if (playerName == "") {
+      alert("Je moet een naam invullen.");
+      return;
+    } else if (!isAlphaNumeric(playerName)) {
+      alert("Je naam mag alleen letters en cijfers bevatten.");
+      return;
+    }
+    document.querySelector("#join-code-dialog").showModal();
+    return;
+  } else {
+    document.querySelector("#join-code-dialog").close();
+  }
 }
 
 function home_JoinWithCode() {
   const code = document.querySelector("#join-code-input").value.toUpperCase();
   const playerName = document.querySelector("#player-name-input").value;
-  if (playerName == "") {
-    alert("Je moet een naam invullen.");
-  } else if (!isAlphaNumeric(playerName)) {
-    alert("Je naam mag alleen letters en cijfers bevatten.");
-  } else if (code.length != 4) {
-    alert("Je moet een 4-letterige code invullen.")
-  } else {
-    sessionStorage.setItem("clientName", playerName);
-    sessionStorage.setItem("lobbyCode", code);
-    sessionStorage.setItem("brightness", brightnessSliderValue);
-    window.location = "/lobby.html";
+  if (code.length != 4) {
+    alert("Je moet een 4-letterige code invullen.");
+    return;
   }
+  sessionStorage.setItem("clientName", playerName);
+  sessionStorage.setItem("lobbyCode", code);
+  sessionStorage.setItem("brightness", brightnessSliderValue);
+  window.location = "/lobby.html";
 }
 
 function home_CreateLobby() {
   const playerName = document.querySelector("#player-name-input").value;
   if (playerName == "") {
     alert("Je moet een naam invullen.");
+    return;
   } else if (!isAlphaNumeric(playerName)) {
     alert("Je naam mag alleen letters en cijfers bevatten.");
-  } else {
-    sessionStorage.setItem("clientName", playerName);
-    sessionStorage.setItem("lobbyCode", "newlobby");
-    sessionStorage.setItem("brightness", brightnessSliderValue);
-    window.location = "/lobby.html";
+    return;
   }
+  sessionStorage.setItem("clientName", playerName);
+  sessionStorage.setItem("lobbyCode", "newlobby");
+  sessionStorage.setItem("brightness", brightnessSliderValue);
+  window.location = "/lobby.html";
 }
 
 function home() { // return to home
